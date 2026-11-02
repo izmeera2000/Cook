@@ -1,1 +1,9 @@
 res://scripts/ui/main_menu_ui.gd
+res://scenes/level/arena.tscn
+res://scenes/level/levelpingl.tscn
+res://assets/characters/player/meshes/godot_robot_chest.tres
+res://assets/characters/player/meshes/godot_robot_face.tres
+res://assets/characters/player/meshes/godot_robot_bottom.tres
+res://assets/characters/player/meshes/godot_robot_limbs_and_head.tres
+res://scripts/player/player.gd
+res://scripts/ui/gameplay_hud_ui.gd

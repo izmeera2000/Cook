@@ -112,12 +112,15 @@ func set_current_order(order_text: String) -> void:
 	_set_first_ticket_status(status)
 
 
-func set_order_result(result_text: String) -> void:
+func set_order_result(result_text: String, ticket_status: String = "") -> void:
 	_current_order = result_text
 	_update_order_display()
 	if order_popup.visible:
 		order_popup_text.text = _current_order
-	_set_first_ticket_status("SERVED" if result_text.begins_with("Order complete!") else "RETRY")
+	var status := ticket_status
+	if status.is_empty():
+		status = "SERVED" if result_text.begins_with("Order complete!") else "RETRY"
+	_set_first_ticket_status(status)
 
 
 func add_points(amount: int) -> void:

@@ -55,6 +55,7 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2542782, 0)
 
 [node name="Arena" parent="Environment" unique_id=318485284 instance=ExtResource("3_85m20")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3994942, 0, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=824936187]
 environment = SubResource("Environment_qb4jd")

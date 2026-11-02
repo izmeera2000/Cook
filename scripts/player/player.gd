@@ -20,6 +20,10 @@ const PICKUP_REQUEST_COOLDOWN_MSEC := 1000
 const STATION_MINIGAME_TARGET := 0.72
 const STATION_MINIGAME_TARGET_WIDTH := 0.18
 const STATION_MINIGAME_ROUNDS := 3
+const PLATE_NONE := &"none"
+const PLATE_CLEAN := &"clean"
+const PLATE_DIRTY := &"dirty"
+const PLATE_WASHED := &"washed"
 const WOK_MOUSE_SHAKE_DISTANCE := 72.0
 const WOK_MOUSE_SHAKE_WINDOW := 0.35
 const WOK_SHAKE_COOLDOWN := 0.45
@@ -89,6 +93,10 @@ var _last_server_pickup_request_msec := -PICKUP_REQUEST_COOLDOWN_MSEC
 var _pickup_area_camera_yaw_offset := 0.0
 var _equipped_hat_visual_id := ""
 var _active_kitchen_station: KitchenStation
+var _plate_state: StringName = PLATE_NONE
+var _food_ready_to_plate := false
+var _pending_food_points := 0
+var _held_plate_visual: Node3D
 var _station_minigame_action_requested := false
 var _station_minigame_time := 0.0
 var _station_minigame_rounds_won := 0
@@ -140,6 +148,7 @@ func _input(event: InputEvent) -> void:
 func _ready():
 	_power_cards = [QUICKSTEP_CARD, CLOUDHOPPER_CARD, OVERCLOCK_CARD, HEAT_RUSH_CARD]
 	_power_card_cooldowns.resize(_power_cards.size())
+	_create_held_plate_visual()
 	_gameplay_hud.visible = is_multiplayer_authority() and DisplayServer.get_name() != "headless"
 	_cooking_minigame_ui.visible = (
 		is_multiplayer_authority() and DisplayServer.get_name() != "headless"
@@ -503,15 +512,40 @@ func _update_station_prompt() -> void:
 		return
 	var station := _find_nearby_kitchen_station()
 	if station:
-		_cooking_minigame_ui.set_interaction_prompt(
-			"E  -  Use %s" % station.station_name, true
-		)
+		var prompt := "E  -  Use %s" % station.station_name
+		match station.station_type:
+			&"plating":
+				prompt = (
+					"E  -  Plate order"
+					if _food_ready_to_plate and _plate_state == PLATE_CLEAN
+					else "E  -  Plate food (needs cooked food and clean plate)"
+				)
+			&"sink":
+				prompt = "E  -  Wash plate" if _plate_state == PLATE_DIRTY else "E  -  Wash dirty plate"
+			&"clean_plates":
+				prompt = (
+					"E  -  Return washed plate"
+					if _plate_state == PLATE_WASHED
+					else "E  -  Take clean plate"
+					if _plate_state == PLATE_NONE
+					else "E  -  Finish using your plate"
+				)
+		_cooking_minigame_ui.set_interaction_prompt(prompt, true)
 	else:
 		_cooking_minigame_ui.set_interaction_prompt("", false)
 
 
 func _begin_station_minigame(station: KitchenStation) -> void:
 	if not station.interaction_camera or not _spring_arm_offset or not _cooking_minigame_ui.visible:
+		return
+	match station.station_type:
+		&"plating", &"sink", &"clean_plates":
+			_interact_with_kitchen_counter(station.station_type)
+			return
+	if _food_ready_to_plate:
+		_gameplay_hud.set_order_result(
+			"Plate the prepared food before starting another order.", "READY TO PLATE"
+		)
 		return
 	var is_grill := station.station_type == &"grill"
 	var is_wok := station.station_type == &"wok"
@@ -567,6 +601,99 @@ func _begin_station_minigame(station: KitchenStation) -> void:
 		58.0 if is_grill or is_wok or is_prep else 70.0
 	)
 	_request_animation(&"Idle")
+
+
+func _interact_with_kitchen_counter(counter_type: StringName) -> void:
+	match counter_type:
+		&"clean_plates":
+			if _plate_state == PLATE_NONE:
+				_plate_state = PLATE_CLEAN
+				_sync_held_plate_visual()
+				_gameplay_hud.set_order_result(
+					"Clean plate picked up. Cook an order, then use the plating counter.", "PLATING"
+				)
+			elif _plate_state == PLATE_WASHED:
+				_plate_state = PLATE_NONE
+				_sync_held_plate_visual()
+				_gameplay_hud.set_order_result(
+					"Washed plate returned. Take a clean plate when ready.", "READY"
+				)
+			else:
+				_gameplay_hud.set_order_result(
+					"Finish using the plate you are carrying first.", "PLATING"
+				)
+		&"plating":
+			if not _food_ready_to_plate:
+				_gameplay_hud.set_order_result("Cook an order before plating food.", "PLATING")
+				return
+			if _plate_state != PLATE_CLEAN:
+				_gameplay_hud.set_order_result(
+					"Take a clean plate from the Clean Plate Counter first.", "PLATING"
+				)
+				return
+			var points := _pending_food_points
+			_plate_state = PLATE_DIRTY
+			_sync_held_plate_visual()
+			_food_ready_to_plate = false
+			_pending_food_points = 0
+			_gameplay_hud.add_points(points)
+			_gameplay_hud.set_order_result(
+				"Order complete! +%d points. Wash the plate at the sink." % points, "SERVED"
+			)
+		&"sink":
+			if _plate_state != PLATE_DIRTY:
+				_gameplay_hud.set_order_result("Bring a dirty plate to the sink.", "WASHING")
+				return
+			_plate_state = PLATE_WASHED
+			_sync_held_plate_visual()
+			_gameplay_hud.set_order_result(
+				"Plate washed. Return it to the Clean Plate Counter.", "WASHING"
+			)
+
+
+func _create_held_plate_visual() -> void:
+	var hand_anchor := get_node_or_null(HAND_EQUIPMENT_PATH.trim_suffix("/")) as BoneAttachment3D
+	if not hand_anchor:
+		return
+
+	_held_plate_visual = Node3D.new()
+	_held_plate_visual.name = "HeldPlate"
+	_held_plate_visual.position = Vector3(0.0, 0.18, 0.16)
+	_held_plate_visual.rotation = Vector3(0.0, 0.0, PI / 2.0)
+	hand_anchor.add_child(_held_plate_visual)
+	_held_plate_visual.add_child(
+		_create_plate_layer("Rim", 0.16, 0.025, Color(0.18, 0.48, 0.5, 1), 0.0)
+	)
+	_held_plate_visual.add_child(
+		_create_plate_layer("Surface", 0.135, 0.008, Color(0.93, 0.91, 0.82, 1), 0.014)
+	)
+	_sync_held_plate_visual()
+
+
+func _create_plate_layer(
+	layer_name: String, radius: float, thickness: float, color: Color, local_height: float
+) -> MeshInstance3D:
+	var cylinder := CylinderMesh.new()
+	cylinder.top_radius = radius
+	cylinder.bottom_radius = radius
+	cylinder.height = thickness
+	cylinder.radial_segments = 32
+
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.32
+
+	var layer := MeshInstance3D.new()
+	layer.name = layer_name
+	layer.mesh = cylinder
+	layer.material_override = material
+	layer.position.y = local_height
+	return layer
+
+
+func _sync_held_plate_visual() -> void:
+	if _held_plate_visual:
+		_held_plate_visual.visible = _plate_state != PLATE_NONE
 
 
 func _on_station_ui_action_pressed() -> void:
@@ -693,8 +820,7 @@ func _process_wok_station(delta: float) -> void:
 	_cooking_minigame_ui.set_wok_view(station.get_wok_progress(), station.get_wok_shakes())
 	if completed:
 		station.complete_minigame(true)
-		_gameplay_hud.add_points(75)
-		_gameplay_hud.set_order_result("Rice ready! +75 points")
+		_queue_food_for_plating(75)
 		_cooking_minigame_ui.finish_wok_view(station.get_wok_shakes())
 
 
@@ -746,8 +872,7 @@ func _process_prep_station() -> void:
 	_cooking_minigame_ui.set_prep_view(station.get_prep_progress(), station.get_prep_chops())
 	if completed:
 		station.complete_minigame(true)
-		_gameplay_hud.add_points(60)
-		_gameplay_hud.set_order_result("Vegetables prepped! +60 points")
+		_queue_food_for_plating(60)
 		_cooking_minigame_ui.finish_prep_view(station.get_prep_chops())
 
 
@@ -757,12 +882,15 @@ func _finish_grill_order(success: bool, burnt: bool) -> void:
 		return
 	station.complete_minigame(success)
 	if success:
-		_gameplay_hud.add_points(100)
-	_gameplay_hud.set_order_result(
-		"Order complete! +100 points"
-		if success
-		else ("Burger burned. Try again at the grill." if burnt else "Order failed. Try again at the grill.")
-	)
+		_queue_food_for_plating(100)
+	else:
+		_food_ready_to_plate = false
+		_pending_food_points = 0
+		_gameplay_hud.set_order_result(
+			"Burger burned. Try again at the grill."
+			if burnt
+			else "Order failed. Try again at the grill."
+		)
 	_cooking_minigame_ui.finish_grill_view(
 		"BURGER READY!" if success else ("BURNT BURGER!" if burnt else "BURGER NEEDS PRACTICE"),
 		"Well-seared sides: %d / 2" % station.get_grill_sides_seared(),
@@ -773,12 +901,13 @@ func _finish_grill_order(success: bool, burnt: bool) -> void:
 func _finish_station_rounds(success: bool) -> void:
 	_active_kitchen_station.complete_minigame(success)
 	if success:
-		_gameplay_hud.add_points(50)
-	_gameplay_hud.set_order_result(
-		"Order complete! +50 points"
-		if success
-		else "Order failed. Try again at the %s." % _active_kitchen_station.station_name
-	)
+		_queue_food_for_plating(50)
+	else:
+		_food_ready_to_plate = false
+		_pending_food_points = 0
+		_gameplay_hud.set_order_result(
+			"Order failed. Try again at the %s." % _active_kitchen_station.station_name
+		)
 	var title := "DISH READY!" if success else "OVERCOOKED!"
 	var result := "Cooking score: %d / %d" % [
 		_station_minigame_rounds_won, STATION_MINIGAME_ROUNDS
@@ -787,6 +916,14 @@ func _finish_station_rounds(success: bool) -> void:
 		title, "Press E or click to return to the kitchen.", result
 	)
 	_station_minigame_result_time = 1.5
+
+
+func _queue_food_for_plating(points: int) -> void:
+	_food_ready_to_plate = true
+	_pending_food_points = points
+	_gameplay_hud.set_order_result(
+		"Food ready. Take a clean plate, then use the plating counter.", "READY TO PLATE"
+	)
 
 
 func _finish_station_minigame(_success: bool) -> void:
