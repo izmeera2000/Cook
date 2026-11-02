@@ -3,7 +3,8 @@ extends Node3D
 
 signal perspective_changed(first_person: bool)
 
-const FIXED_CAMERA_PITCH := deg_to_rad(-65.0)
+const FIXED_CAMERA_PITCH := deg_to_rad(-55.0)
+const THIRD_PERSON_SIDE_OFFSET := 0.35
 const OCCLUDER_TRANSPARENCY := 0.5
 const MAX_OCCLUDERS := 8
 
@@ -15,7 +16,7 @@ const MAX_OCCLUDERS := 8
 @export_range(0.0, 30.0, 0.05) var third_person_distance := 8.0
 @export_range(0.0, 1.0, 0.05) var first_person_distance := 0.0
 @export_range(0.0, 3.0, 0.05) var third_person_height := 2.0
-@export_range(8.0, 50.0, 0.5) var third_person_orthographic_size := 10.0
+@export_range(8.0, 50.0, 0.5) var third_person_orthographic_size := 8.5
 @export_range(1.0, 179.0, 1.0) var third_person_fov := 75.0
 @export_range(1.0, 179.0, 1.0) var first_person_fov := 90.0
 
@@ -162,7 +163,7 @@ func _apply_perspective() -> void:
 			_camera.fov = first_person_fov
 	else:
 		_spring_arm.spring_length = third_person_distance
-		_spring_arm.position = Vector3(0.0, third_person_height, 0.0)
+		_spring_arm.position = Vector3(THIRD_PERSON_SIDE_OFFSET, third_person_height, 0.0)
 		if _camera:
 			_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 			_camera.size = third_person_orthographic_size

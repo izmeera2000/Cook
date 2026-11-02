@@ -13,8 +13,10 @@ var player_list_visible := false
 var _player_nickname_heights: Dictionary = {}
 var _nickname_heights_requested := false
 var _nickname_height_requesters: Dictionary = {}
+var _active_map_id := Network.DEFAULT_MAP_ID
 
 @onready var players_container: Node3D = $PlayersContainer
+@onready var environment_root: Node3D = $Environment
 @onready var main_menu: MainMenuUI = $MainMenuUI
 @onready var multiplayer_chat: MultiplayerChatUI = $MultiplayerChatUI
 @onready var inventory_ui: InventoryUI = $InventoryUI
@@ -106,6 +108,9 @@ func _reset_session_ui() -> void:
 
 
 func _on_player_connected(peer_id, player_info):
+	if peer_id == 1 and not multiplayer.is_server():
+		if not _set_active_map(str(player_info.get("map_id", Network.DEFAULT_MAP_ID))):
+			return
 	var player = _add_player(peer_id, player_info)
 	if multiplayer.is_server() and player:
 		player.call_deferred("_sync_inventory_to_owner")
@@ -118,8 +123,34 @@ func _on_player_connected(peer_id, player_info):
 	_refresh_player_list()
 
 
-func _on_host_pressed(nickname: String, skin: String):
-	var error = Network.start_host(nickname, skin)
+func _set_active_map(map_id: String) -> bool:
+	var safe_map_id := Network.sanitize_map_id(map_id)
+	if safe_map_id == _active_map_id and environment_root.has_node("KitchenMap"):
+		return true
+
+	var map_scene := load(Network.get_map_scene_path(safe_map_id)) as PackedScene
+	if not map_scene:
+		push_error("Could not load map scene for '%s'." % safe_map_id)
+		return false
+
+	var current_map := environment_root.get_node_or_null("KitchenMap")
+	if current_map:
+		environment_root.remove_child(current_map)
+		current_map.queue_free()
+
+	var map_instance := map_scene.instantiate()
+	map_instance.name = "KitchenMap"
+	environment_root.add_child(map_instance)
+	_active_map_id = safe_map_id
+	return true
+
+
+func _on_host_pressed(nickname: String, skin: String, map_id: String):
+	if not _set_active_map(map_id):
+		main_menu.show_menu()
+		_update_mouse_mode()
+		return
+	var error = Network.start_host(nickname, skin, map_id)
 	if error:
 		push_warning("Failed to host game. Error: " + str(error))
 		main_menu.show_menu()

@@ -181,7 +181,7 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option1" unique_id=848326644]
+[node name="Label" type="Label" parent="MainContainer/MainMenu/Form/Option1" unique_id=848326644]
 layout_mode = 2
 custom_minimum_size = Vector2(146, 0)
 size_flags_horizontal = 4
@@ -207,7 +207,7 @@ layout_mode = 2
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option2" unique_id=1101934130]
+[node name="Label" type="Label" parent="MainContainer/MainMenu/Form/Option2" unique_id=1101934130]
 layout_mode = 2
 custom_minimum_size = Vector2(146, 0)
 size_flags_horizontal = 4
@@ -233,7 +233,7 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option3" unique_id=492922165]
+[node name="Label" type="Label" parent="MainContainer/MainMenu/Form/Option3" unique_id=492922165]
 layout_mode = 2
 custom_minimum_size = Vector2(146, 0)
 size_flags_horizontal = 4
@@ -253,6 +253,32 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 placeholder_text = "127.0.0.1"
 alignment = 1
 expand_to_text_length = false
+
+[node name="Option5" type="HBoxContainer" parent="MainContainer/MainMenu/Form"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="MainContainer/MainMenu/Form/Option5"]
+layout_mode = 2
+custom_minimum_size = Vector2(146, 0)
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.87, 0.9, 0.84, 1)
+theme_override_font_sizes/font_size = 22
+text = "Host Map : "
+horizontal_alignment = 2
+
+[node name="MapInput" type="OptionButton" parent="MainContainer/MainMenu/Form/Option5"]
+layout_mode = 2
+custom_minimum_size = Vector2(280, 48)
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_field")
+theme_override_styles/hover = SubResource("StyleBoxFlat_field_focus")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_field_focus")
+theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 
 [node name="HSeparator2" type="HSeparator" parent="MainContainer/MainMenu/Form" unique_id=1512408463]
 layout_mode = 2

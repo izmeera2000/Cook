@@ -8,9 +8,18 @@ const SERVER_PORT: int = 8080
 const MAX_PLAYERS: int = 10
 const MAX_NICK_LENGTH := 24
 const MAX_ADDRESS_LENGTH := 253
+const DEFAULT_MAP_ID := "kitchen"
+const MAP_SCENE_PATHS := {
+	"kitchen": "res://scenes/level/kitchen_map.tscn",
+	"island": "res://scenes/level/island_kitchen_map.tscn"
+}
+const MAP_DISPLAY_NAMES := {
+	"kitchen": "Kitchen Map",
+	"island": "Island Kitchen"
+}
 
 var players = {}
-var player_info = {"nick": "host", "skin": Character.SkinColor.BLUE}
+var player_info = {"nick": "host", "skin": Character.SkinColor.BLUE, "map_id": DEFAULT_MAP_ID}
 var _session_active := false
 
 
@@ -22,7 +31,7 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected_ok)
 
 
-func start_host(nickname: String, skin_color_str: String):
+func start_host(nickname: String, skin_color_str: String, map_id: String = DEFAULT_MAP_ID):
 	var peer = ENetMultiplayerPeer.new()
 	var error = peer.create_server(SERVER_PORT, MAX_PLAYERS)
 	if error:
@@ -34,6 +43,7 @@ func start_host(nickname: String, skin_color_str: String):
 
 	player_info["nick"] = sanitize_nickname(nickname, "Host_" + str(multiplayer.get_unique_id()))
 	player_info["skin"] = skin_str_to_e(skin_color_str)
+	player_info["map_id"] = sanitize_map_id(map_id)
 
 	if DisplayServer.get_name() == "headless":
 		return
@@ -147,8 +157,25 @@ func _sync_registered_player(peer_id: int, registered_player_info: Dictionary):
 func sanitize_player_info(info: Dictionary, fallback_nick: String) -> Dictionary:
 	return {
 		"nick": sanitize_nickname(str(info.get("nick", "")), fallback_nick),
-		"skin": sanitize_skin_value(info.get("skin", Character.SkinColor.BLUE))
+		"skin": sanitize_skin_value(info.get("skin", Character.SkinColor.BLUE)),
+		"map_id": sanitize_map_id(str(info.get("map_id", DEFAULT_MAP_ID)))
 	}
+
+
+func get_map_ids() -> Array[String]:
+	return ["kitchen", "island"]
+
+
+func get_map_display_name(map_id: String) -> String:
+	return str(MAP_DISPLAY_NAMES.get(sanitize_map_id(map_id), MAP_DISPLAY_NAMES[DEFAULT_MAP_ID]))
+
+
+func get_map_scene_path(map_id: String) -> String:
+	return str(MAP_SCENE_PATHS.get(sanitize_map_id(map_id), MAP_SCENE_PATHS[DEFAULT_MAP_ID]))
+
+
+func sanitize_map_id(map_id: String) -> String:
+	return map_id if MAP_SCENE_PATHS.has(map_id) else DEFAULT_MAP_ID
 
 
 func sanitize_nickname(nickname: String, fallback: String) -> String:

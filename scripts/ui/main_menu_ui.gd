@@ -1,7 +1,7 @@
 class_name MainMenuUI
 extends Control
 
-signal host_pressed(nickname: String, skin: String)
+signal host_pressed(nickname: String, skin: String, map_id: String)
 signal join_pressed(nickname: String, skin: String, address: String)
 signal quit_pressed
 
@@ -9,6 +9,7 @@ const SKIN_OPTIONS: Array[String] = ["Blue", "Yellow", "Green", "Red"]
 const SAFE_AREA_MARGIN := 24.0
 
 @onready var skin_input: OptionButton = $MainContainer/MainMenu/Form/Option2/SkinInput
+@onready var map_input: OptionButton = $MainContainer/MainMenu/Form/Option5/MapInput
 @onready var nick_input: LineEdit = $MainContainer/MainMenu/Form/Option1/NickInput
 @onready var address_input: LineEdit = $MainContainer/MainMenu/Form/Option3/AddressInput
 @onready var main_container: VBoxContainer = $MainContainer
@@ -19,6 +20,10 @@ func _ready() -> void:
 	for skin_name in SKIN_OPTIONS:
 		skin_input.add_item(skin_name)
 	skin_input.select(0)
+	for map_id in Network.get_map_ids():
+		map_input.add_item(Network.get_map_display_name(map_id))
+		map_input.set_item_metadata(map_input.item_count - 1, map_id)
+	map_input.select(0)
 	resized.connect(_update_responsive_layout)
 	call_deferred("_update_responsive_layout")
 
@@ -26,7 +31,7 @@ func _ready() -> void:
 func _on_host_pressed() -> void:
 	var nickname = nick_input.text.strip_edges()
 	var skin = get_skin()
-	host_pressed.emit(nickname, skin)
+	host_pressed.emit(nickname, skin, get_map_id())
 
 
 func _on_join_pressed() -> void:
@@ -69,3 +74,9 @@ func _update_responsive_layout() -> void:
 
 func get_skin() -> String:
 	return skin_input.get_item_text(skin_input.selected).to_lower()
+
+
+func get_map_id() -> String:
+	if map_input.selected < 0:
+		return Network.DEFAULT_MAP_ID
+	return Network.sanitize_map_id(str(map_input.get_item_metadata(map_input.selected)))

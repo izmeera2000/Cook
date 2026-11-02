@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/level/kitchen_map.tscn" id="1_kitchen"]
+
+[node name="IslandKitchenMap" instance=ExtResource("1_kitchen")]
+
+[node name="KitchenStationLayout" parent="KitchenCounters" index="0"]
+position = Vector3(-2.4, 0, 0)
+rotation = Vector3(0, 1.5707963, 0)
+
+[node name="ServiceCounterLayout" parent="KitchenCounters" index="1"]
+position = Vector3(2.4, 0, 0)
+rotation = Vector3(0, 1.5707963, 0)

@@ -53,9 +53,11 @@ const HEAD_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach/"
 const HAND_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/"
 const BACK_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/BackAttach/"
 const FIRST_PERSON_HIDDEN_BONES: Array[StringName] = [&"Head", &"HeadTop"]
-const HELD_PLATE_POSITION := Vector3(0.0, 1.48, -0.64)
+const HELD_PLATE_POSITION := Vector3(0.0, 1.48, 0.4)
 const HELD_PLATE_ROTATION := Vector3(deg_to_rad(20.0), 0.0, 0.0)
-const HELD_PLATE_HAND_SPAN := 0.28
+const HELD_PLATE_SCALE := 2.0
+const HELD_PLATE_HAND_SPAN := 0.48
+const HELD_PLATE_ARM_LENGTH_SCALE := 1.2
 
 @export var skin_color: SkinColor = SkinColor.BLUE
 
@@ -660,7 +662,7 @@ func _create_held_plate_visual() -> void:
 	_held_plate_visual.name = "HeldPlate"
 	_held_plate_visual.position = HELD_PLATE_POSITION
 	_held_plate_visual.rotation = HELD_PLATE_ROTATION
-	_held_plate_visual.scale = Vector3.ONE * 1.4
+	_held_plate_visual.scale = Vector3.ONE * HELD_PLATE_SCALE
 	_skeleton.add_child(_held_plate_visual)
 	_held_plate_visual.add_child(
 		_create_plate_layer("Rim", 0.16, 0.025, Color(0.18, 0.48, 0.5, 1), 0.0)
@@ -712,13 +714,24 @@ func _create_plate_layer(
 
 
 func _sync_held_plate_visual() -> void:
+	var is_holding_plate := _plate_state != PLATE_NONE
 	if _held_plate_visual:
-		_held_plate_visual.visible = _plate_state != PLATE_NONE
+		_held_plate_visual.visible = is_holding_plate
+	_set_plate_arm_length(HELD_PLATE_ARM_LENGTH_SCALE if is_holding_plate else 1.0)
 	for hand_ik in _plate_hand_ik:
-		if _plate_state == PLATE_NONE:
-			hand_ik.stop()
-		else:
+		if is_holding_plate:
 			hand_ik.start()
+		else:
+			hand_ik.stop()
+
+
+func _set_plate_arm_length(scale_y: float) -> void:
+	for bone_name in [&"upper_arm.L", &"forearm.L", &"upper_arm.R", &"forearm.R"]:
+		var bone_index := _skeleton.find_bone(bone_name)
+		if bone_index < 0:
+			push_error("Held plate pose requires skeleton bone '%s'." % bone_name)
+			return
+		_skeleton.set_bone_pose_scale(bone_index, Vector3(1.0, scale_y, 1.0))
 
 
 func _on_station_ui_action_pressed() -> void:
