@@ -1,0 +1,193 @@
+[gd_scene format=3 uid="uid://cwej2i581otm2"]
+
+[ext_resource type="Script" uid="uid://0tmnkelmafj4" path="res://scripts/ui/gameplay_hud_ui.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/ui/power_cards_ui.tscn" id="2_power_cards"]
+[ext_resource type="PackedScene" path="res://scenes/ui/order_ticket_ui.tscn" id="3_order_ticket"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.055, 0.06, 0.07, 0.84)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.58, 0.62, 0.5)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="GameplayHUDUI" type="CanvasLayer" unique_id=217551668]
+layer = 15
+script = ExtResource("1_script")
+
+[node name="Screen" type="Control" parent="." unique_id=472869747]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="OrdersBar" type="PanelContainer" parent="Screen" unique_id=531449174]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -726.0
+offset_bottom = 104.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bar")
+
+[node name="Content" type="HBoxContainer" parent="Screen/OrdersBar" unique_id=1629919484]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HideButton" type="Button" parent="Screen/OrdersBar/Content" unique_id=734010688]
+custom_minimum_size = Vector2(70, 52)
+layout_mode = 2
+tooltip_text = "Hide orders"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 16
+text = "HIDE"
+
+[node name="OrderSummary" type="Label" parent="Screen/OrdersBar/Content" unique_id=888989936]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "No active order"
+vertical_alignment = 1
+
+[node name="OrdersButton" type="Button" parent="Screen/OrdersBar/Content" unique_id=667872098]
+custom_minimum_size = Vector2(130, 52)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 18
+text = "ORDERS"
+
+[node name="ShowOrdersButton" type="Button" parent="Screen" unique_id=1776439020]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -1121.0
+offset_bottom = 107.0
+grow_horizontal = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 18
+text = "SHOW ORDERS"
+
+[node name="PointsPanel" type="PanelContainer" parent="Screen" unique_id=1676486412]
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -126.0
+offset_right = 216.0
+offset_bottom = -24.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bar")
+
+[node name="PointsLabel" type="Label" parent="Screen/PointsPanel" unique_id=770372128]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "POINTS
+0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PowersButton" type="Button" parent="Screen" unique_id=723800297]
+custom_minimum_size = Vector2(112, 160)
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -136.0
+offset_top = -184.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_vertical = 0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 20
+text = "POWERS
+SEE ALL"
+
+[node name="OrderPopup" type="Control" parent="Screen" unique_id=2046926671]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Backdrop" type="ColorRect" parent="Screen/OrderPopup" unique_id=269915289]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.015, 0.02, 0.025, 0.55)
+
+[node name="Dialog" type="PanelContainer" parent="Screen/OrderPopup" unique_id=1784994713]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 294.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bar")
+
+[node name="Layout" type="VBoxContainer" parent="Screen/OrderPopup/Dialog" unique_id=52549983]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="Screen/OrderPopup/Dialog/Layout" unique_id=1580941909]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Screen/OrderPopup/Dialog/Layout/Header" unique_id=1868428200]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "CURRENT ORDER"
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="Screen/OrderPopup/Dialog/Layout/Header" unique_id=812380205]
+custom_minimum_size = Vector2(42, 38)
+layout_mode = 2
+focus_mode = 0
+text = "X"
+
+[node name="OrderSummary" type="Label" parent="Screen/OrderPopup/Dialog/Layout" unique_id=1998681385]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "No active order"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="OrdersScroll" type="ScrollContainer" parent="Screen/OrderPopup/Dialog/Layout"]
+custom_minimum_size = Vector2(0, 202)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 1
+vertical_scroll_mode = 0
+
+[node name="OrderTickets" type="HBoxContainer" parent="Screen/OrderPopup/Dialog/Layout/OrdersScroll"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PowerCardsUI" parent="." unique_id=1349129238 instance=ExtResource("2_power_cards")]

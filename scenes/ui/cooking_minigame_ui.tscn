@@ -1,0 +1,280 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/cooking_minigame_ui.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/player/burger_flip_visual.gd" id="2_burger"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.08, 0.1, 0.11, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.847059, 0.658824, 0.368627, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 22.0
+content_margin_top = 18.0
+content_margin_right = 22.0
+content_margin_bottom = 18.0
+
+[node name="CookingMinigameUI" type="CanvasLayer"]
+layer = 20
+script = ExtResource("1_script")
+
+[node name="Screen" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="InteractionPrompt" type="Label" parent="Screen"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -76.0
+offset_right = 240.0
+offset_bottom = -32.0
+theme_override_colors/font_color = Color(1, 0.94902, 0.788235, 1)
+theme_override_colors/font_shadow_color = Color(0.12549, 0.12549, 0.12549, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "E - Use station"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CookingMinigame" type="PanelContainer" parent="Screen"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -235.0
+offset_right = 280.0
+offset_bottom = 235.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="Screen/CookingMinigame"]
+layout_mode = 2
+
+[node name="Layout" type="VBoxContainer" parent="Screen/CookingMinigame/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Screen/CookingMinigame/MarginContainer/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "COOKING"
+horizontal_alignment = 1
+
+[node name="Instructions" type="Label" parent="Screen/CookingMinigame/MarginContainer/Layout"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Watch the food and time your action."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BurgerContainer" type="CenterContainer" parent="Screen/CookingMinigame/MarginContainer/Layout"]
+custom_minimum_size = Vector2(440, 142)
+layout_mode = 2
+
+[node name="BurgerVisual" type="Control" parent="Screen/CookingMinigame/MarginContainer/Layout/BurgerContainer"]
+custom_minimum_size = Vector2(440, 142)
+layout_mode = 2
+script = ExtResource("2_burger")
+
+[node name="CookingProgress" type="Control" parent="Screen/CookingMinigame/MarginContainer/Layout"]
+custom_minimum_size = Vector2(440, 40)
+layout_mode = 2
+
+[node name="Background" type="ColorRect" parent="Screen/CookingMinigame/MarginContainer/Layout/CookingProgress"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.215686, 0.239216, 0.243137, 1)
+
+[node name="Fill" type="ColorRect" parent="Screen/CookingMinigame/MarginContainer/Layout/CookingProgress"]
+layout_mode = 0
+offset_bottom = 40.0
+mouse_filter = 2
+color = Color(0.85098, 0.509804, 0.262745, 1)
+
+[node name="TargetZone" type="ColorRect" parent="Screen/CookingMinigame/MarginContainer/Layout/CookingProgress"]
+layout_mode = 0
+offset_left = 277.2
+offset_right = 356.4
+offset_bottom = 40.0
+mouse_filter = 2
+color = Color(0.32549, 0.721569, 0.423529, 1)
+
+[node name="Needle" type="ColorRect" parent="Screen/CookingMinigame/MarginContainer/Layout/CookingProgress"]
+layout_mode = 0
+offset_top = -3.0
+offset_right = 8.0
+offset_bottom = 43.0
+mouse_filter = 2
+color = Color(1, 0.956863, 0.839216, 1)
+
+[node name="Result" type="Label" parent="Screen/CookingMinigame/MarginContainer/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Ready"
+horizontal_alignment = 1
+
+[node name="ActionButton" type="Button" parent="Screen/CookingMinigame/MarginContainer/Layout"]
+custom_minimum_size = Vector2(220, 42)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "FLIP / INTERACT"
+
+[node name="GrillHUD" type="Control" parent="Screen"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Screen/GrillHUD"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -265.0
+offset_top = 24.0
+offset_right = 265.0
+offset_bottom = 220.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="Screen/GrillHUD/Panel"]
+layout_mode = 2
+
+[node name="Layout" type="VBoxContainer" parent="Screen/GrillHUD/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Screen/GrillHUD/Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "KITCHEN STATION"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="Screen/GrillHUD/Panel/Margin/Layout"]
+custom_minimum_size = Vector2(480, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Patty on the grill"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SideOne" type="HBoxContainer" parent="Screen/GrillHUD/Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="Screen/GrillHUD/Panel/Margin/Layout/SideOne"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "SIDE 1"
+vertical_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="Screen/GrillHUD/Panel/Margin/Layout/SideOne"]
+custom_minimum_size = Vector2(390, 18)
+layout_mode = 2
+max_value = 120.0
+show_percentage = false
+
+[node name="SideTwo" type="HBoxContainer" parent="Screen/GrillHUD/Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="Screen/GrillHUD/Panel/Margin/Layout/SideTwo"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "SIDE 2"
+vertical_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="Screen/GrillHUD/Panel/Margin/Layout/SideTwo"]
+custom_minimum_size = Vector2(390, 18)
+layout_mode = 2
+max_value = 120.0
+show_percentage = false
+
+[node name="RiceProgress" type="HBoxContainer" parent="Screen/GrillHUD/Panel/Margin/Layout"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PrepProgress" type="HBoxContainer" parent="Screen/GrillHUD/Panel/Margin/Layout"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Label" type="Label" parent="Screen/GrillHUD/Panel/Margin/Layout/PrepProgress"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "CHOP"
+vertical_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="Screen/GrillHUD/Panel/Margin/Layout/PrepProgress"]
+custom_minimum_size = Vector2(390, 18)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="Label" type="Label" parent="Screen/GrillHUD/Panel/Margin/Layout/RiceProgress"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "RICE"
+vertical_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="Screen/GrillHUD/Panel/Margin/Layout/RiceProgress"]
+custom_minimum_size = Vector2(390, 18)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="ActionButton" type="Button" parent="Screen/GrillHUD"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -76.0
+offset_right = 140.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 18
+text = "INTERACT"
+
+[node name="LeaveButton" type="Button" parent="Screen/GrillHUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -76.0
+offset_right = -24.0
+offset_bottom = -28.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 16
+text = "LEAVE STATION"
