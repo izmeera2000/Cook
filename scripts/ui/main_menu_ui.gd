@@ -8,9 +8,9 @@ signal quit_pressed
 const SKIN_OPTIONS: Array[String] = ["Blue", "Yellow", "Green", "Red"]
 const SAFE_AREA_MARGIN := 24.0
 
-@onready var skin_input: OptionButton = $MainContainer/MainMenu/Option2/SkinInput
-@onready var nick_input: LineEdit = $MainContainer/MainMenu/Option1/NickInput
-@onready var address_input: LineEdit = $MainContainer/MainMenu/Option3/AddressInput
+@onready var skin_input: OptionButton = $MainContainer/MainMenu/Form/Option2/SkinInput
+@onready var nick_input: LineEdit = $MainContainer/MainMenu/Form/Option1/NickInput
+@onready var address_input: LineEdit = $MainContainer/MainMenu/Form/Option3/AddressInput
 @onready var main_container: VBoxContainer = $MainContainer
 
 
