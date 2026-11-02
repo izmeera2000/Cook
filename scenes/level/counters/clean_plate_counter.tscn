@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/level/kitchen_station.gd" id="1_station"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/counter_base.tscn" id="2_base"]
+
+[sub_resource type="StandardMaterial3D" id="PlateMaterial"]
+albedo_color = Color(0.93, 0.91, 0.82, 1)
+roughness = 0.25
+
+[sub_resource type="CylinderMesh" id="PlateMesh"]
+material = SubResource("PlateMaterial")
+top_radius = 0.22
+bottom_radius = 0.22
+height = 0.035
+radial_segments = 32
+
+[node name="CleanPlateCounter" type="Node3D" node_paths=PackedStringArray("interaction_camera")]
+script = ExtResource("1_station")
+station_name = "Clean Plate Counter"
+station_type = &"clean_plates"
+interaction_camera = NodePath("InteractionCamera")
+
+[node name="CounterBase" parent="." instance=ExtResource("2_base")]
+position = Vector3(0, 0.5, 0)
+
+[node name="PlateStack1" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.14, 0)
+mesh = SubResource("PlateMesh")
+
+[node name="PlateStack2" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.175, 0)
+mesh = SubResource("PlateMesh")
+
+[node name="PlateStack3" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.21, 0)
+mesh = SubResource("PlateMesh")
+
+[node name="InteractionCamera" type="Marker3D" parent="."]
+position = Vector3(0, 2.45, -0.8)
+rotation = Vector3(-0.57, 3.141593, 0)

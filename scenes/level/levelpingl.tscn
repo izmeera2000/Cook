@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://d0dgljwwl463n" path="res://scripts/level/level.gd" id="1_2dy3d"]
 [ext_resource type="PackedScene" uid="uid://cffjduipbb3s5" path="res://scenes/level/player.tscn" id="2_y8tp8"]
-[ext_resource type="PackedScene" path="res://scenes/level/arena.tscn" id="3_85m20"]
+[ext_resource type="PackedScene" path="res://scenes/level/kitchen_map.tscn" id="3_85m20"]
 [ext_resource type="PackedScene" uid="uid://bx7mq8t8hjn7q" path="res://scenes/ui/main_menu_ui.tscn" id="4_1ypah"]
 [ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://scenes/ui/multiplayer_chat_ui.tscn" id="5_6y12x"]
 [ext_resource type="PackedScene" uid="uid://bclq8vh1x2goy" path="res://scenes/ui/inventory_ui.tscn" id="6_h843w"]
@@ -54,7 +54,7 @@ spawn_path = NodePath("../Environment/ItemContainer")
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2542782, 0)
 
-[node name="Arena" parent="Environment" unique_id=318485284 instance=ExtResource("3_85m20")]
+[node name="KitchenMap" parent="Environment" unique_id=318485284 instance=ExtResource("3_85m20")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3994942, 0, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=824936187]

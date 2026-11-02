@@ -1,0 +1,85 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/level/kitchen_station.gd" id="1_station"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/counter_base.tscn" id="2_base"]
+
+[sub_resource type="StandardMaterial3D" id="BasinMaterial"]
+albedo_color = Color(0.12, 0.14, 0.15, 1)
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="AccentMaterial"]
+albedo_color = Color(0.18, 0.48, 0.5, 1)
+roughness = 0.38
+
+[sub_resource type="StandardMaterial3D" id="MetalMaterial"]
+albedo_color = Color(0.48, 0.53, 0.54, 1)
+metallic = 0.55
+roughness = 0.32
+
+[sub_resource type="BoxMesh" id="BasinMesh"]
+material = SubResource("BasinMaterial")
+size = Vector3(0.62, 0.035, 0.32)
+
+[sub_resource type="BoxMesh" id="RimMesh"]
+material = SubResource("AccentMaterial")
+size = Vector3(0.76, 0.08, 0.06)
+
+[sub_resource type="CylinderMesh" id="FaucetStemMesh"]
+material = SubResource("MetalMaterial")
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.28
+radial_segments = 16
+
+[sub_resource type="CylinderMesh" id="FaucetSpoutMesh"]
+material = SubResource("MetalMaterial")
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.24
+radial_segments = 16
+
+[node name="SinkCounter" type="Node3D" node_paths=PackedStringArray("interaction_camera")]
+script = ExtResource("1_station")
+station_name = "Sink"
+station_type = &"sink"
+interaction_camera = NodePath("InteractionCamera")
+
+[node name="CounterBase" parent="." instance=ExtResource("2_base")]
+position = Vector3(0, 0.5, 0)
+
+[node name="Basin" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.14, 0)
+mesh = SubResource("BasinMesh")
+
+[node name="RimBack" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.18, -0.17)
+mesh = SubResource("RimMesh")
+
+[node name="RimFront" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.18, 0.17)
+mesh = SubResource("RimMesh")
+
+[node name="RimLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.35, 1.18, 0)
+rotation = Vector3(0, 1.570796, 0)
+scale = Vector3(0.42, 1, 1)
+mesh = SubResource("RimMesh")
+
+[node name="RimRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.35, 1.18, 0)
+rotation = Vector3(0, 1.570796, 0)
+scale = Vector3(0.42, 1, 1)
+mesh = SubResource("RimMesh")
+
+[node name="FaucetStem" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.29, -0.17)
+mesh = SubResource("FaucetStemMesh")
+
+[node name="FaucetSpout" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.42, -0.05)
+rotation = Vector3(1.570796, 0, 0)
+mesh = SubResource("FaucetSpoutMesh")
+
+[node name="InteractionCamera" type="Marker3D" parent="."]
+position = Vector3(0, 2.45, -0.8)
+rotation = Vector3(-0.57, 3.141593, 0)

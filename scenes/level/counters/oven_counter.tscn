@@ -1,0 +1,64 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/level/kitchen_station.gd" id="1_station"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/counter_base.tscn" id="2_base"]
+
+[sub_resource type="StandardMaterial3D" id="DarkMaterial"]
+albedo_color = Color(0.12, 0.14, 0.15, 1)
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="AccentMaterial"]
+albedo_color = Color(0.18, 0.48, 0.5, 1)
+roughness = 0.38
+
+[sub_resource type="BoxMesh" id="OvenDoorMesh"]
+material = SubResource("DarkMaterial")
+size = Vector3(0.88, 0.56, 0.07)
+
+[sub_resource type="CylinderMesh" id="BurnerMesh"]
+material = SubResource("DarkMaterial")
+top_radius = 0.14
+bottom_radius = 0.14
+height = 0.045
+radial_segments = 20
+
+[node name="OvenCounter" type="Node3D" node_paths=PackedStringArray("interaction_camera")]
+script = ExtResource("1_station")
+station_name = "Oven"
+interaction_camera = NodePath("InteractionCamera")
+
+[node name="CounterBase" parent="." instance=ExtResource("2_base")]
+position = Vector3(0, 0.5, -1)
+
+[node name="OvenDoor" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.5, -0.56)
+mesh = SubResource("OvenDoorMesh")
+
+[node name="OvenWindow" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.52, -0.52)
+scale = Vector3(0.78, 0.68, 0.2)
+mesh = SubResource("OvenDoorMesh")
+surface_material_override/0 = SubResource("AccentMaterial")
+
+[node name="StoveBurners" type="Node3D" parent="."]
+position = Vector3(0, 1.15, -1)
+
+[node name="Burner_Back_Left" type="MeshInstance3D" parent="StoveBurners"]
+position = Vector3(-0.35, 0, -0.18)
+mesh = SubResource("BurnerMesh")
+
+[node name="Burner_Back_Right" type="MeshInstance3D" parent="StoveBurners"]
+position = Vector3(0.35, 0, -0.18)
+mesh = SubResource("BurnerMesh")
+
+[node name="Burner_Front_Left" type="MeshInstance3D" parent="StoveBurners"]
+position = Vector3(-0.35, 0, 0.18)
+mesh = SubResource("BurnerMesh")
+
+[node name="Burner_Front_Right" type="MeshInstance3D" parent="StoveBurners"]
+position = Vector3(0.35, 0, 0.18)
+mesh = SubResource("BurnerMesh")
+
+[node name="InteractionCamera" type="Marker3D" parent="."]
+position = Vector3(0, 1.25, 0.45)
+rotation = Vector3(-0.15, 0, 0)

@@ -53,6 +53,9 @@ const HEAD_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach/"
 const HAND_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/"
 const BACK_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/BackAttach/"
 const FIRST_PERSON_HIDDEN_BONES: Array[StringName] = [&"Head", &"HeadTop"]
+const HELD_PLATE_POSITION := Vector3(0.0, 1.48, -0.64)
+const HELD_PLATE_ROTATION := Vector3(deg_to_rad(20.0), 0.0, 0.0)
+const HELD_PLATE_HAND_SPAN := 0.28
 
 @export var skin_color: SkinColor = SkinColor.BLUE
 
@@ -97,6 +100,7 @@ var _plate_state: StringName = PLATE_NONE
 var _food_ready_to_plate := false
 var _pending_food_points := 0
 var _held_plate_visual: Node3D
+var _plate_hand_ik: Array[SkeletonIK3D] = []
 var _station_minigame_action_requested := false
 var _station_minigame_time := 0.0
 var _station_minigame_rounds_won := 0
@@ -652,22 +656,38 @@ func _interact_with_kitchen_counter(counter_type: StringName) -> void:
 
 
 func _create_held_plate_visual() -> void:
-	var hand_anchor := get_node_or_null(HAND_EQUIPMENT_PATH.trim_suffix("/")) as BoneAttachment3D
-	if not hand_anchor:
-		return
-
 	_held_plate_visual = Node3D.new()
 	_held_plate_visual.name = "HeldPlate"
-	_held_plate_visual.position = Vector3(0.0, 0.18, 0.16)
-	_held_plate_visual.rotation = Vector3(0.0, 0.0, PI / 2.0)
-	hand_anchor.add_child(_held_plate_visual)
+	_held_plate_visual.position = HELD_PLATE_POSITION
+	_held_plate_visual.rotation = HELD_PLATE_ROTATION
+	_held_plate_visual.scale = Vector3.ONE * 1.4
+	_skeleton.add_child(_held_plate_visual)
 	_held_plate_visual.add_child(
 		_create_plate_layer("Rim", 0.16, 0.025, Color(0.18, 0.48, 0.5, 1), 0.0)
 	)
 	_held_plate_visual.add_child(
 		_create_plate_layer("Surface", 0.135, 0.008, Color(0.93, 0.91, 0.82, 1), 0.014)
 	)
+	_create_plate_hand_ik("Left", "upper_arm.L", "hand.L", HELD_PLATE_HAND_SPAN)
+	_create_plate_hand_ik("Right", "upper_arm.R", "hand.R", -HELD_PLATE_HAND_SPAN)
 	_sync_held_plate_visual()
+
+
+func _create_plate_hand_ik(
+	side: String, root_bone: String, tip_bone: String, hand_offset: float
+) -> void:
+	var hand_target := Node3D.new()
+	hand_target.name = "Plate%sHandTarget" % side
+	hand_target.position = HELD_PLATE_POSITION + Vector3(hand_offset, 0.0, 0.0)
+	_skeleton.add_child(hand_target)
+
+	var hand_ik := SkeletonIK3D.new()
+	hand_ik.name = "Plate%sHandIK" % side
+	hand_ik.root_bone = root_bone
+	hand_ik.tip_bone = tip_bone
+	hand_ik.target_node = NodePath("../%s" % hand_target.name)
+	_skeleton.add_child(hand_ik)
+	_plate_hand_ik.append(hand_ik)
 
 
 func _create_plate_layer(
@@ -694,6 +714,11 @@ func _create_plate_layer(
 func _sync_held_plate_visual() -> void:
 	if _held_plate_visual:
 		_held_plate_visual.visible = _plate_state != PLATE_NONE
+	for hand_ik in _plate_hand_ik:
+		if _plate_state == PLATE_NONE:
+			hand_ik.stop()
+		else:
+			hand_ik.start()
 
 
 func _on_station_ui_action_pressed() -> void:

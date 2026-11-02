@@ -6,13 +6,13 @@ func _initialize() -> void:
 
 
 func _run_check() -> void:
-	var arena: Node3D = load("res://scenes/level/arena.tscn").instantiate()
-	root.add_child(arena)
+	var kitchen_map: Node3D = load("res://scenes/level/kitchen_map.tscn").instantiate()
+	root.add_child(kitchen_map)
 	await process_frame
 
 	var stations := get_nodes_in_group("kitchen_stations")
-	if stations.size() != 2:
-		push_error("Expected oven and grill interaction stations.")
+	if stations.size() != 7:
+		push_error("Expected all seven kitchen map interaction stations.")
 		quit(1)
 		return
 
@@ -43,5 +43,5 @@ func _run_check() -> void:
 		quit(1)
 		return
 
-	print("Oven/grill stations and first-person camera switching passed.")
+	print("All kitchen map stations and first-person camera switching passed.")
 	quit()

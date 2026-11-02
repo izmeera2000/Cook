@@ -1,0 +1,39 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="CabinetMaterial"]
+albedo_color = Color(0.42, 0.22, 0.14, 1)
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="CountertopMaterial"]
+albedo_color = Color(0.8, 0.77, 0.68, 1)
+roughness = 0.42
+
+[sub_resource type="BoxMesh" id="CabinetMesh"]
+material = SubResource("CabinetMaterial")
+size = Vector3(1.72, 1, 0.82)
+
+[sub_resource type="BoxShape3D" id="CabinetShape"]
+size = Vector3(1.72, 1, 0.82)
+
+[sub_resource type="BoxMesh" id="CountertopMesh"]
+material = SubResource("CountertopMaterial")
+size = Vector3(1.82, 0.12, 0.9)
+
+[sub_resource type="BoxShape3D" id="CountertopShape"]
+size = Vector3(1.82, 0.12, 0.9)
+
+[node name="CounterBase" type="StaticBody3D"]
+
+[node name="CabinetCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("CabinetShape")
+
+[node name="Cabinet" type="MeshInstance3D" parent="."]
+mesh = SubResource("CabinetMesh")
+
+[node name="CountertopCollision" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.56, 0)
+shape = SubResource("CountertopShape")
+
+[node name="Countertop" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.56, 0)
+mesh = SubResource("CountertopMesh")

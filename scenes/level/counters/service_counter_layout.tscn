@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/level/counters/plating_counter.tscn" id="1_plating"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/sink_counter.tscn" id="2_sink"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/clean_plate_counter.tscn" id="3_clean_plates"]
+
+[node name="ServiceCounterLayout" type="Node3D"]
+
+[node name="PlatingCounter" parent="." instance=ExtResource("1_plating")]
+position = Vector3(-2, 0, 0)
+
+[node name="SinkCounter" parent="." instance=ExtResource("2_sink")]
+position = Vector3(0, 0, 0)
+
+[node name="CleanPlateCounter" parent="." instance=ExtResource("3_clean_plates")]
+position = Vector3(2, 0, 0)

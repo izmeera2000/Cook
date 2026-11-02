@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/level/kitchen_station.gd" id="1_station"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/counter_base.tscn" id="2_base"]
+[ext_resource type="PackedScene" path="res://scenes/level/wok_rice.tscn" id="3_wok"]
+
+[node name="WokCounter" type="Node3D" node_paths=PackedStringArray("interaction_camera")]
+script = ExtResource("1_station")
+station_name = "Wok"
+station_type = &"wok"
+interaction_camera = NodePath("InteractionCamera")
+
+[node name="CounterBase" parent="." instance=ExtResource("2_base")]
+position = Vector3(0, 0.5, -1)
+
+[node name="WokRice" parent="." instance=ExtResource("3_wok")]
+position = Vector3(0, 1.14, -0.75)
+
+[node name="InteractionCamera" type="Marker3D" parent="."]
+position = Vector3(0, 2.45, 1.25)
+rotation = Vector3(-0.57, 0, 0)

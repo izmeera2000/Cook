@@ -4,6 +4,8 @@ extends Node3D
 signal perspective_changed(first_person: bool)
 
 const FIXED_CAMERA_PITCH := deg_to_rad(-65.0)
+const OCCLUDER_TRANSPARENCY := 0.5
+const MAX_OCCLUDERS := 8
 
 @export_category("Objects")
 @export var _spring_arm: SpringArm3D = null
@@ -16,10 +18,6 @@ const FIXED_CAMERA_PITCH := deg_to_rad(-65.0)
 @export_range(8.0, 50.0, 0.5) var third_person_orthographic_size := 10.0
 @export_range(1.0, 179.0, 1.0) var third_person_fov := 75.0
 @export_range(1.0, 179.0, 1.0) var first_person_fov := 90.0
-
-@export_category("Camera Occlusion")
-@export_range(0.0, 1.0, 0.05) var occluder_transparency := 0.82
-@export_range(1, 16, 1) var max_occluders := 8
 
 var is_first_person := false
 var _yaw := 0.0
@@ -90,12 +88,12 @@ func _update_camera_occlusion() -> void:
 	var desired_fades: Dictionary[MeshInstance3D, bool] = {}
 	var excluded_rids: Array[RID] = [player_body.get_rid()]
 	var query := PhysicsRayQueryParameters3D.create(camera_position, focus_position)
-	query.collision_mask = 0x7FFFFFFF
+	query.collision_mask = 3
 	query.exclude = excluded_rids
 	query.collide_with_areas = false
 	var space_state := get_world_3d().direct_space_state
 
-	for _hit_index in max_occluders:
+	for _hit_index in MAX_OCCLUDERS:
 		var hit := space_state.intersect_ray(query)
 		if hit.is_empty():
 			break
@@ -120,7 +118,7 @@ func _update_camera_occlusion() -> void:
 			continue
 		if not _faded_meshes.has(mesh):
 			_faded_meshes[mesh] = mesh.transparency
-		mesh.transparency = maxf(_faded_meshes[mesh], occluder_transparency)
+		mesh.transparency = OCCLUDER_TRANSPARENCY
 
 
 func _add_occluder_meshes(

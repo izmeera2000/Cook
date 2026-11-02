@@ -2,13 +2,12 @@
 
 [ext_resource type="Script" uid="uid://d0dgljwwl463n" path="res://scripts/level/level.gd" id="1_e1sh7"]
 [ext_resource type="PackedScene" uid="uid://cffjduipbb3s5" path="res://scenes/level/player.tscn" id="1_uvcbi"]
-[ext_resource type="PackedScene" path="res://scenes/level/arena.tscn" id="2_arena"]
+[ext_resource type="PackedScene" path="res://scenes/level/kitchen_map.tscn" id="2_kitchen_map"]
 [ext_resource type="PackedScene" uid="uid://bclq8vh1x2goy" path="res://scenes/ui/inventory_ui.tscn" id="4_x8g2h"]
 [ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://scenes/ui/multiplayer_chat_ui.tscn" id="5_x9g3h"]
 [ext_resource type="PackedScene" uid="uid://bx7mq8t8hjn7q" path="res://scenes/ui/main_menu_ui.tscn" id="6_x9g3h"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu_ui.tscn" id="8_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/player_list_ui.tscn" id="9_player_list"]
-[ext_resource type="Script" path="res://scripts/level/kitchen_station.gd" id="10_station"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.22, 0.46, 0.72, 1)
@@ -42,74 +41,6 @@ fog_density = 0.0025
 fog_aerial_perspective = 0.45
 fog_sky_affect = 0.65
 
-[sub_resource type="StandardMaterial3D" id="SinkCabinetMaterial"]
-albedo_color = Color(0.42, 0.22, 0.14, 1)
-roughness = 0.72
-
-[sub_resource type="StandardMaterial3D" id="SinkCountertopMaterial"]
-albedo_color = Color(0.8, 0.77, 0.68, 1)
-roughness = 0.42
-
-[sub_resource type="StandardMaterial3D" id="SinkAccentMaterial"]
-albedo_color = Color(0.18, 0.48, 0.5, 1)
-roughness = 0.38
-
-[sub_resource type="StandardMaterial3D" id="SinkMetalMaterial"]
-albedo_color = Color(0.48, 0.53, 0.54, 1)
-metallic = 0.55
-roughness = 0.32
-
-[sub_resource type="StandardMaterial3D" id="SinkBasinMaterial"]
-albedo_color = Color(0.12, 0.14, 0.15, 1)
-roughness = 0.3
-
-[sub_resource type="StandardMaterial3D" id="PlateMaterial"]
-albedo_color = Color(0.93, 0.91, 0.82, 1)
-roughness = 0.25
-
-[sub_resource type="BoxMesh" id="SinkCabinetMesh"]
-material = SubResource("SinkCabinetMaterial")
-size = Vector3(1.72, 1, 0.82)
-
-[sub_resource type="BoxShape3D" id="SinkCabinetShape"]
-size = Vector3(1.72, 1, 0.82)
-
-[sub_resource type="BoxMesh" id="SinkCountertopMesh"]
-material = SubResource("SinkCountertopMaterial")
-size = Vector3(1.82, 0.12, 0.9)
-
-[sub_resource type="BoxShape3D" id="SinkCountertopShape"]
-size = Vector3(1.82, 0.12, 0.9)
-
-[sub_resource type="BoxMesh" id="SinkBasinMesh"]
-material = SubResource("SinkBasinMaterial")
-size = Vector3(0.62, 0.035, 0.32)
-
-[sub_resource type="BoxMesh" id="SinkRimMesh"]
-material = SubResource("SinkAccentMaterial")
-size = Vector3(0.76, 0.08, 0.06)
-
-[sub_resource type="CylinderMesh" id="SinkFaucetStemMesh"]
-material = SubResource("SinkMetalMaterial")
-top_radius = 0.035
-bottom_radius = 0.035
-height = 0.28
-radial_segments = 16
-
-[sub_resource type="CylinderMesh" id="SinkFaucetSpoutMesh"]
-material = SubResource("SinkMetalMaterial")
-top_radius = 0.025
-bottom_radius = 0.025
-height = 0.24
-radial_segments = 16
-
-[sub_resource type="CylinderMesh" id="PlateMesh"]
-material = SubResource("PlateMaterial")
-top_radius = 0.22
-bottom_radius = 0.22
-height = 0.035
-radial_segments = 32
-
 [node name="Level" type="Node3D" unique_id=1359265925]
 script = ExtResource("1_e1sh7")
 player_scene = ExtResource("1_uvcbi")
@@ -123,7 +54,7 @@ spawn_path = NodePath("../Environment/ItemContainer")
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2542782, 0)
 
-[node name="Arena" parent="Environment" unique_id=318485284 instance=ExtResource("2_arena")]
+[node name="KitchenMap" parent="Environment" unique_id=318485284 instance=ExtResource("2_kitchen_map")]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=824936187]
 environment = SubResource("Environment_qb4jd")
@@ -136,141 +67,6 @@ shadow_enabled = true
 shadow_blur = 0.5
 
 [node name="ItemContainer" type="Node3D" parent="Environment" unique_id=1445003613]
-
-[node name="SinkCounter" type="StaticBody3D" parent="Environment"]
-position = Vector3(0, 0.5, 3.8)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="Environment/SinkCounter"]
-shape = SubResource("SinkCabinetShape")
-
-[node name="Cabinet" type="MeshInstance3D" parent="Environment/SinkCounter"]
-mesh = SubResource("SinkCabinetMesh")
-
-[node name="CountertopCollision" type="CollisionShape3D" parent="Environment/SinkCounter"]
-position = Vector3(0, 0.56, 0)
-shape = SubResource("SinkCountertopShape")
-
-[node name="Countertop" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(0, 0.56, 0)
-mesh = SubResource("SinkCountertopMesh")
-
-[node name="Basin" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(0, 0.64, 0)
-mesh = SubResource("SinkBasinMesh")
-
-[node name="RimBack" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(0, 0.68, -0.17)
-mesh = SubResource("SinkRimMesh")
-
-[node name="RimFront" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(0, 0.68, 0.17)
-mesh = SubResource("SinkRimMesh")
-
-[node name="RimLeft" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(-0.35, 0.68, 0)
-rotation = Vector3(0, 1.570796, 0)
-scale = Vector3(0.42, 1, 1)
-mesh = SubResource("SinkRimMesh")
-
-[node name="RimRight" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(0.35, 0.68, 0)
-rotation = Vector3(0, 1.570796, 0)
-scale = Vector3(0.42, 1, 1)
-mesh = SubResource("SinkRimMesh")
-
-[node name="FaucetStem" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(0, 0.79, -0.17)
-mesh = SubResource("SinkFaucetStemMesh")
-
-[node name="FaucetSpout" type="MeshInstance3D" parent="Environment/SinkCounter"]
-position = Vector3(0, 0.92, -0.05)
-rotation = Vector3(1.570796, 0, 0)
-mesh = SubResource("SinkFaucetSpoutMesh")
-
-[node name="PlatingCounter" type="StaticBody3D" parent="Environment"]
-position = Vector3(-2.5, 0.5, 3.8)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="Environment/PlatingCounter"]
-shape = SubResource("SinkCabinetShape")
-
-[node name="Cabinet" type="MeshInstance3D" parent="Environment/PlatingCounter"]
-mesh = SubResource("SinkCabinetMesh")
-
-[node name="CountertopCollision" type="CollisionShape3D" parent="Environment/PlatingCounter"]
-position = Vector3(0, 0.56, 0)
-shape = SubResource("SinkCountertopShape")
-
-[node name="Countertop" type="MeshInstance3D" parent="Environment/PlatingCounter"]
-position = Vector3(0, 0.56, 0)
-mesh = SubResource("SinkCountertopMesh")
-
-[node name="Plate" type="MeshInstance3D" parent="Environment/PlatingCounter"]
-position = Vector3(0, 0.64, 0)
-mesh = SubResource("PlateMesh")
-
-[node name="CleanPlateCounter" type="StaticBody3D" parent="Environment"]
-position = Vector3(2.5, 0.5, 3.8)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="Environment/CleanPlateCounter"]
-shape = SubResource("SinkCabinetShape")
-
-[node name="Cabinet" type="MeshInstance3D" parent="Environment/CleanPlateCounter"]
-mesh = SubResource("SinkCabinetMesh")
-
-[node name="CountertopCollision" type="CollisionShape3D" parent="Environment/CleanPlateCounter"]
-position = Vector3(0, 0.56, 0)
-shape = SubResource("SinkCountertopShape")
-
-[node name="Countertop" type="MeshInstance3D" parent="Environment/CleanPlateCounter"]
-position = Vector3(0, 0.56, 0)
-mesh = SubResource("SinkCountertopMesh")
-
-[node name="PlateStack1" type="MeshInstance3D" parent="Environment/CleanPlateCounter"]
-position = Vector3(0, 0.64, 0)
-mesh = SubResource("PlateMesh")
-
-[node name="PlateStack2" type="MeshInstance3D" parent="Environment/CleanPlateCounter"]
-position = Vector3(0, 0.675, 0)
-mesh = SubResource("PlateMesh")
-
-[node name="PlateStack3" type="MeshInstance3D" parent="Environment/CleanPlateCounter"]
-position = Vector3(0, 0.71, 0)
-mesh = SubResource("PlateMesh")
-
-[node name="KitchenStations" type="Node3D" parent="Environment"]
-
-[node name="PlatingStation" type="Node3D" parent="Environment/KitchenStations" node_paths=PackedStringArray("interaction_camera")]
-position = Vector3(-2.5, 0, 3.8)
-script = ExtResource("10_station")
-station_name = "Plating Counter"
-station_type = &"plating"
-interaction_camera = NodePath("InteractionCamera")
-
-[node name="InteractionCamera" type="Marker3D" parent="Environment/KitchenStations/PlatingStation"]
-position = Vector3(0, 2.45, -0.8)
-rotation = Vector3(-0.57, 3.141593, 0)
-
-[node name="SinkStation" type="Node3D" parent="Environment/KitchenStations" node_paths=PackedStringArray("interaction_camera")]
-position = Vector3(0, 0, 3.8)
-script = ExtResource("10_station")
-station_name = "Sink"
-station_type = &"sink"
-interaction_camera = NodePath("InteractionCamera")
-
-[node name="InteractionCamera" type="Marker3D" parent="Environment/KitchenStations/SinkStation"]
-position = Vector3(0, 2.45, -0.8)
-rotation = Vector3(-0.57, 3.141593, 0)
-
-[node name="CleanPlateStation" type="Node3D" parent="Environment/KitchenStations" node_paths=PackedStringArray("interaction_camera")]
-position = Vector3(2.5, 0, 3.8)
-script = ExtResource("10_station")
-station_name = "Clean Plate Counter"
-station_type = &"clean_plates"
-interaction_camera = NodePath("InteractionCamera")
-
-[node name="InteractionCamera" type="Marker3D" parent="Environment/KitchenStations/CleanPlateStation"]
-position = Vector3(0, 2.45, -0.8)
-rotation = Vector3(-0.57, 3.141593, 0)
 
 [node name="PlayersContainer" type="Node3D" parent="." unique_id=1732952398 groups=["Players"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6891646, 0)

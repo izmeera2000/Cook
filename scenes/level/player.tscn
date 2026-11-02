@@ -41,6 +41,9 @@ height = 1.73092
 height = 1.2
 radius = 0.9
 
+[sub_resource type="SphereShape3D" id="SpringArmShape"]
+radius = 0.2
+
 [sub_resource type="Skin" id="Skin_ixatg"]
 resource_name = "Skin"
 bind_count = 25
@@ -4844,10 +4847,13 @@ _first_person_anchor = NodePath("../GodotRobot3D/FirstPersonCameraSource/FirstPe
 [node name="SpringArm3D" type="SpringArm3D" parent="SpringArmOffset" unique_id=1915471732]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 spring_length = 5.0
+margin = 0.1
+shape = SubResource("SpringArmShape")
+collision_mask = 3
 
 [node name="Camera3D" type="Camera3D" parent="SpringArmOffset/SpringArm3D" unique_id=1087327110]
 current = true
-near = 0.01
+near = 0.1
 
 [node name="FirstPersonHUD" type="CanvasLayer" parent="." unique_id=1104668221]
 layer = 10

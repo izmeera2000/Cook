@@ -1,9 +1,7 @@
 [gd_scene format=3 uid="uid://bnidqbgr3v26b"]
 
-[ext_resource type="Script" uid="uid://3vca8er4thct" path="res://scripts/level/kitchen_station.gd" id="1_station"]
-[ext_resource type="PackedScene" path="res://scenes/level/grill_burger.tscn" id="2_burger"]
-[ext_resource type="PackedScene" path="res://scenes/level/wok_rice.tscn" id="3_wok"]
-[ext_resource type="PackedScene" path="res://scenes/level/vegetable_prep.tscn" id="4_prep"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/kitchen_station_layout.tscn" id="1_kitchen_layout"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/service_counter_layout.tscn" id="2_service_layout"]
 
 [sub_resource type="BoxShape3D" id="FloorCollision"]
 size = Vector3(10, 0.4, 10)
@@ -113,7 +111,7 @@ roughness = 0.32
 material = SubResource("MetalMaterial")
 size = Vector3(0.95, 2.15, 0.85)
 
-[node name="Arena" type="Node3D" unique_id=1302738318]
+[node name="KitchenMap" type="Node3D" unique_id=1302738318]
 
 [node name="Floor" type="StaticBody3D" parent="." unique_id=365547758]
 collision_layer = 2
@@ -289,112 +287,11 @@ mesh = SubResource("WallMesh")
 
 [node name="KitchenCounters" type="Node3D" parent="." unique_id=247354774]
 
-[node name="StoveCounter" type="StaticBody3D" parent="KitchenCounters" unique_id=1506810491]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4784088, 0.5, -3.8)
+[node name="KitchenStationLayout" parent="KitchenCounters" instance=ExtResource("1_kitchen_layout")]
+position = Vector3(0, 0, -3)
 
-[node name="CabinetCollision" type="CollisionShape3D" parent="KitchenCounters/StoveCounter" unique_id=487605576]
-shape = SubResource("CabinetCollision")
-
-[node name="Cabinet" type="MeshInstance3D" parent="KitchenCounters/StoveCounter" unique_id=591663244]
-mesh = SubResource("CabinetMesh")
-
-[node name="CountertopCollision" type="CollisionShape3D" parent="KitchenCounters/StoveCounter" unique_id=1423349060]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-shape = SubResource("CountertopCollision")
-
-[node name="Countertop" type="MeshInstance3D" parent="KitchenCounters/StoveCounter" unique_id=1514906680]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-mesh = SubResource("CountertopMesh")
-
-[node name="OvenDoor" type="MeshInstance3D" parent="KitchenCounters/StoveCounter" unique_id=1826520852]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.44)
-mesh = SubResource("OvenDoorMesh")
-
-[node name="OvenWindow" type="MeshInstance3D" parent="KitchenCounters/StoveCounter" unique_id=2007277158]
-transform = Transform3D(0.78, 0, 0, 0, 0.68, 0, 0, 0, 0.2, 0, 0.02, 0.48)
-mesh = SubResource("OvenDoorMesh")
-surface_material_override/0 = SubResource("AccentMaterial")
-
-[node name="StoveBurners" type="Node3D" parent="KitchenCounters/StoveCounter" unique_id=38663612]
-
-[node name="Burner_Back_Left" type="MeshInstance3D" parent="KitchenCounters/StoveCounter/StoveBurners" unique_id=1195187421]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 0.65, -0.18)
-mesh = SubResource("BurnerMesh")
-
-[node name="Burner_Back_Right" type="MeshInstance3D" parent="KitchenCounters/StoveCounter/StoveBurners" unique_id=283637926]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.65, -0.18)
-mesh = SubResource("BurnerMesh")
-
-[node name="Burner_Front_Left" type="MeshInstance3D" parent="KitchenCounters/StoveCounter/StoveBurners" unique_id=63386711]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 0.65, 0.18)
-mesh = SubResource("BurnerMesh")
-
-[node name="Burner_Front_Right" type="MeshInstance3D" parent="KitchenCounters/StoveCounter/StoveBurners" unique_id=1574164804]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.65, 0.18)
-mesh = SubResource("BurnerMesh")
-
-[node name="SinkCounter" type="StaticBody3D" parent="KitchenCounters" unique_id=2046896345]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3, 0.5, -3.8)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="KitchenCounters/SinkCounter" unique_id=466940371]
-shape = SubResource("CabinetCollision")
-
-[node name="Cabinet" type="MeshInstance3D" parent="KitchenCounters/SinkCounter" unique_id=461510747]
-mesh = SubResource("CabinetMesh")
-
-[node name="CountertopCollision" type="CollisionShape3D" parent="KitchenCounters/SinkCounter" unique_id=1858516207]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-shape = SubResource("CountertopCollision")
-
-[node name="Countertop" type="MeshInstance3D" parent="KitchenCounters/SinkCounter" unique_id=1920570929]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-mesh = SubResource("CountertopMesh")
-
-[node name="Sink" type="MeshInstance3D" parent="KitchenCounters/SinkCounter" unique_id=515990766]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
-mesh = SubResource("SinkMesh")
-
-[node name="PrepCounter" type="StaticBody3D" parent="KitchenCounters" unique_id=1123219208]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0.5, -3.8)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="KitchenCounters/PrepCounter" unique_id=1777525721]
-shape = SubResource("CabinetCollision")
-
-[node name="Cabinet" type="MeshInstance3D" parent="KitchenCounters/PrepCounter" unique_id=1917160555]
-mesh = SubResource("CabinetMesh")
-
-[node name="CountertopCollision" type="CollisionShape3D" parent="KitchenCounters/PrepCounter" unique_id=833950705]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-shape = SubResource("CountertopCollision")
-
-[node name="Countertop" type="MeshInstance3D" parent="KitchenCounters/PrepCounter" unique_id=158915411]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-mesh = SubResource("CountertopMesh")
-
-[node name="Grill" type="MeshInstance3D" parent="KitchenCounters/PrepCounter" unique_id=1287045805]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
-mesh = SubResource("GrillMesh")
-
-[node name="ServingCounter" type="StaticBody3D" parent="KitchenCounters" unique_id=793105312]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.5, -3.8)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="KitchenCounters/ServingCounter" unique_id=968071481]
-shape = SubResource("CabinetCollision")
-
-[node name="Cabinet" type="MeshInstance3D" parent="KitchenCounters/ServingCounter" unique_id=409382716]
-mesh = SubResource("CabinetMesh")
-
-[node name="CountertopCollision" type="CollisionShape3D" parent="KitchenCounters/ServingCounter" unique_id=1302984878]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-shape = SubResource("CountertopCollision")
-
-[node name="Countertop" type="MeshInstance3D" parent="KitchenCounters/ServingCounter" unique_id=1657107268]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-mesh = SubResource("CountertopMesh")
-
-[node name="ServingBoard" type="MeshInstance3D" parent="KitchenCounters/ServingCounter" unique_id=407039012]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
-mesh = SubResource("BoardMesh")
+[node name="ServiceCounterLayout" parent="KitchenCounters" instance=ExtResource("2_service_layout")]
+position = Vector3(0, 0, 4)
 
 [node name="SideCounters" type="Node3D" parent="KitchenCounters" unique_id=1684248475]
 
@@ -501,60 +398,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
 mesh = SubResource("SideCountertopMesh")
 
 [node name="Fridge" type="StaticBody3D" parent="KitchenCounters" unique_id=1841830524]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.05, 1.075, -3.85)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.05, 1.075, -3)
 
 [node name="Collision" type="CollisionShape3D" parent="KitchenCounters/Fridge" unique_id=1221424561]
 shape = SubResource("ApplianceCollision")
 
 [node name="Visual" type="MeshInstance3D" parent="KitchenCounters/Fridge" unique_id=2053630601]
 mesh = SubResource("ApplianceMesh")
-
-[node name="KitchenStations" type="Node3D" parent="." unique_id=1271446792]
-
-[node name="OvenStation" type="Node3D" parent="KitchenStations" unique_id=491772482 node_paths=PackedStringArray("interaction_camera")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0, -2.55)
-script = ExtResource("1_station")
-station_name = "Oven"
-interaction_camera = NodePath("InteractionCamera")
-
-[node name="InteractionCamera" type="Marker3D" parent="KitchenStations/OvenStation" unique_id=1597842932]
-transform = Transform3D(1, 0, 0, 0, 0.9887711, 0.14943814, 0, -0.14943814, 0.9887711, 0, 1.25, 0)
-
-[node name="GrillStation" type="Node3D" parent="KitchenStations" unique_id=870070848 node_paths=PackedStringArray("interaction_camera")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, -2.55)
-script = ExtResource("1_station")
-station_name = "Grill"
-station_type = &"grill"
-interaction_camera = NodePath("InteractionCamera")
-
-[node name="GrillBurger" parent="KitchenStations/GrillStation" unique_id=198991080 instance=ExtResource("2_burger")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.27, -1.25)
-
-[node name="InteractionCamera" type="Marker3D" parent="KitchenStations/GrillStation" unique_id=503216246]
-transform = Transform3D(1, 0, 0, 0, 0.841901, 0.539632, 0, -0.539632, 0.841901, 0, 2.45, 0.8)
-
-[node name="WokStation" type="Node3D" parent="KitchenStations" unique_id=2020301981 node_paths=PackedStringArray("interaction_camera")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, -2.55)
-script = ExtResource("1_station")
-station_name = "Wok"
-station_type = &"wok"
-interaction_camera = NodePath("InteractionCamera")
-
-[node name="WokRice" parent="KitchenStations/WokStation" unique_id=172187960 instance=ExtResource("3_wok")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.27, -1.25)
-
-[node name="InteractionCamera" type="Marker3D" parent="KitchenStations/WokStation" unique_id=436390852]
-transform = Transform3D(1, 0, 0, 0, 0.841901, 0.539632, 0, -0.539632, 0.841901, 0, 2.45, 0.8)
-
-[node name="VegetablePrepStation" type="Node3D" parent="KitchenStations" unique_id=1016817486 node_paths=PackedStringArray("interaction_camera")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3, 0, -2.55)
-script = ExtResource("1_station")
-station_name = "Vegetable Prep"
-station_type = &"prep"
-interaction_camera = NodePath("InteractionCamera")
-
-[node name="VegetablePrep" parent="KitchenStations/VegetablePrepStation" unique_id=1572246148 instance=ExtResource("4_prep")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.27, -1.25)
-
-[node name="InteractionCamera" type="Marker3D" parent="KitchenStations/VegetablePrepStation" unique_id=493291875]
-transform = Transform3D(1, 0, 0, 0, 0.841901, 0.539632, 0, -0.539632, 0.841901, 0, 2.45, 0.8)
