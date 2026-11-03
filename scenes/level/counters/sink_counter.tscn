@@ -1,7 +1,6 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/level/kitchen_station.gd" id="1_station"]
-[ext_resource type="PackedScene" path="res://scenes/level/counters/counter_base.tscn" id="2_base"]
 
 [sub_resource type="StandardMaterial3D" id="BasinMaterial"]
 albedo_color = Color(0.12, 0.14, 0.15, 1)
@@ -38,14 +37,23 @@ bottom_radius = 0.025
 height = 0.24
 radial_segments = 16
 
+[sub_resource type="StandardMaterial3D" id="WaterMaterial"]
+albedo_color = Color(0.55, 0.82, 0.96, 0.72)
+transparency = 1
+roughness = 0.15
+
+[sub_resource type="CylinderMesh" id="WaterStreamMesh"]
+material = SubResource("WaterMaterial")
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.26
+radial_segments = 12
+
 [node name="SinkCounter" type="Node3D" node_paths=PackedStringArray("interaction_camera")]
 script = ExtResource("1_station")
 station_name = "Sink"
 station_type = &"sink"
 interaction_camera = NodePath("InteractionCamera")
-
-[node name="CounterBase" parent="." instance=ExtResource("2_base")]
-position = Vector3(0, 0.5, 0)
 
 [node name="Basin" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.14, 0)
@@ -79,6 +87,10 @@ mesh = SubResource("FaucetStemMesh")
 position = Vector3(0, 1.42, -0.05)
 rotation = Vector3(1.570796, 0, 0)
 mesh = SubResource("FaucetSpoutMesh")
+
+[node name="WaterStream" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.29, 0.04)
+mesh = SubResource("WaterStreamMesh")
 
 [node name="InteractionCamera" type="Marker3D" parent="."]
 position = Vector3(0, 2.45, -0.8)

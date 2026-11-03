@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/level/counters/oven_counter.tscn" id="1_oven"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/grill_counter.tscn" id="2_grill"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/wok_counter.tscn" id="3_wok"]
+
+[node name="KitchenStationLayout" type="Node3D"]
+
+[node name="OvenCounter" parent="." instance=ExtResource("1_oven")]
+position = Vector3(-2, 0, 0)
+
+[node name="GrillCounter" parent="." instance=ExtResource("2_grill")]
+position = Vector3(0, 0, 0)
+
+[node name="WokCounter" parent="." instance=ExtResource("3_wok")]
+position = Vector3(2, 0, 0)

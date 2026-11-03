@@ -23,7 +23,6 @@ const STATION_MINIGAME_ROUNDS := 3
 const PLATE_NONE := &"none"
 const PLATE_CLEAN := &"clean"
 const PLATE_DIRTY := &"dirty"
-const PLATE_WASHED := &"washed"
 const WOK_MOUSE_SHAKE_DISTANCE := 72.0
 const WOK_MOUSE_SHAKE_WINDOW := 0.35
 const WOK_SHAKE_COOLDOWN := 0.45
@@ -58,6 +57,7 @@ const HELD_PLATE_ROTATION := Vector3(deg_to_rad(20.0), 0.0, 0.0)
 const HELD_PLATE_SCALE := 2.0
 const HELD_PLATE_HAND_SPAN := 0.48
 const HELD_PLATE_ARM_LENGTH_SCALE := 1.2
+const PLACED_TOMATO_SCRIPT: Script = preload("res://scripts/level/placed_tomato.gd")
 
 @export var skin_color: SkinColor = SkinColor.BLUE
 
@@ -102,7 +102,22 @@ var _plate_state: StringName = PLATE_NONE
 var _food_ready_to_plate := false
 var _pending_food_points := 0
 var _held_plate_visual: Node3D
+var _held_plate_position: Vector3 = HELD_PLATE_POSITION
+var _held_plate_rotation: Vector3 = HELD_PLATE_ROTATION
+var _held_plate_scale: float = HELD_PLATE_SCALE
+var _held_plate_radius: float = 0.16
+var _held_plate_hand_span: float = HELD_PLATE_HAND_SPAN
+var _held_plate_hand_offset := Vector3.ZERO
+var _held_plate_hand_rotation := Vector3.ZERO
+var _held_plate_arm_length_scale: float = HELD_PLATE_ARM_LENGTH_SCALE
+var _held_food_visual: Node3D
 var _plate_hand_ik: Array[SkeletonIK3D] = []
+var _washed_plate_available := false
+var _washed_plate_output: MeshInstance3D
+var _holding_tomato := false
+var _held_tomato_visual: Node3D
+var _tomato_hand_ik: Array[SkeletonIK3D] = []
+var _tomato_counter: Node3D
 var _station_minigame_action_requested := false
 var _station_minigame_time := 0.0
 var _station_minigame_rounds_won := 0
@@ -154,7 +169,11 @@ func _input(event: InputEvent) -> void:
 func _ready():
 	_power_cards = [QUICKSTEP_CARD, CLOUDHOPPER_CARD, OVERCLOCK_CARD, HEAT_RUSH_CARD]
 	_power_card_cooldowns.resize(_power_cards.size())
+	_apply_level_plate_presentation()
 	_create_held_plate_visual()
+	_create_held_tomato_visual()
+	_washed_plate_output = get_tree().get_first_node_in_group("washed_plate_output") as MeshInstance3D
+	_tomato_counter = get_tree().get_first_node_in_group("tomato_counters") as Node3D
 	_gameplay_hud.visible = is_multiplayer_authority() and DisplayServer.get_name() != "headless"
 	_cooking_minigame_ui.visible = (
 		is_multiplayer_authority() and DisplayServer.get_name() != "headless"
@@ -271,6 +290,19 @@ func _physics_process(delta):
 
 	if Input.is_action_just_pressed("pickup") and is_on_floor():
 		var nearby_station := _find_nearby_kitchen_station()
+		if _holding_tomato:
+			if nearby_station:
+				_place_tomato_at_station(nearby_station)
+			else:
+				_place_tomato_in_front()
+			return
+		var placed_tomato := _find_nearby_placed_tomato()
+		if placed_tomato:
+			placed_tomato.queue_free()
+			_holding_tomato = true
+			_sync_held_tomato_visual()
+			_gameplay_hud.set_order_result("Tomato picked up. Carry it with both hands.", "READY")
+			return
 		if nearby_station:
 			_begin_station_minigame(nearby_station)
 			return
@@ -319,6 +351,16 @@ func _apply_gravity(delta: float) -> void:
 func _start_attack() -> void:
 	if is_attacking or is_collecting or not is_on_floor():
 		return
+	if not _holding_tomato:
+		var nearby_tomato := _find_nearby_placed_tomato()
+		if nearby_tomato:
+			var chop_count := int(nearby_tomato.call("register_chop"))
+			_gameplay_hud.set_order_result(
+				"Tomato chopped!"
+				if chop_count >= 3
+				else "Chopping tomato: %d / 3" % chop_count,
+				"READY"
+			)
 	is_attacking = true
 	velocity.x = 0
 	velocity.z = 0
@@ -519,23 +561,29 @@ func _update_station_prompt() -> void:
 	var station := _find_nearby_kitchen_station()
 	if station:
 		var prompt := "E  -  Use %s" % station.station_name
-		match station.station_type:
-			&"plating":
-				prompt = (
-					"E  -  Plate order"
-					if _food_ready_to_plate and _plate_state == PLATE_CLEAN
-					else "E  -  Plate food (needs cooked food and clean plate)"
-				)
-			&"sink":
-				prompt = "E  -  Wash plate" if _plate_state == PLATE_DIRTY else "E  -  Wash dirty plate"
-			&"clean_plates":
-				prompt = (
-					"E  -  Return washed plate"
-					if _plate_state == PLATE_WASHED
-					else "E  -  Take clean plate"
-					if _plate_state == PLATE_NONE
-					else "E  -  Finish using your plate"
-				)
+		if _holding_tomato:
+			prompt = "E  -  Place tomato"
+		else:
+			match station.station_type:
+				&"plating":
+					prompt = (
+						"E  -  Plate order"
+						if _food_ready_to_plate and _plate_state == PLATE_CLEAN
+						else "E  -  Plate food (needs cooked food and clean plate)"
+					)
+				&"sink":
+					prompt = "E  -  Wash plate" if _plate_state == PLATE_DIRTY else "E  -  Wash dirty plate"
+				&"clean_plates":
+					if _plate_state == PLATE_NONE:
+						prompt = (
+							"E  -  Take washed plate"
+							if _washed_plate_available
+							else "E  -  Take clean plate"
+						)
+					else:
+						prompt = "E  -  Finish using your plate"
+				&"tomato":
+					prompt = "E  -  Take tomato"
 		_cooking_minigame_ui.set_interaction_prompt(prompt, true)
 	else:
 		_cooking_minigame_ui.set_interaction_prompt("", false)
@@ -544,8 +592,18 @@ func _update_station_prompt() -> void:
 func _begin_station_minigame(station: KitchenStation) -> void:
 	if not station.interaction_camera or not _spring_arm_offset or not _cooking_minigame_ui.visible:
 		return
+	if _holding_tomato:
+		if station.station_type == &"tomato":
+			_holding_tomato = false
+			_sync_held_tomato_visual()
+			if _tomato_counter and _tomato_counter.has_method("return_tomato"):
+				_tomato_counter.return_tomato()
+			_gameplay_hud.set_order_result("Tomato returned to the storage drawer.", "READY")
+		else:
+			_place_tomato_at_station(station)
+		return
 	match station.station_type:
-		&"plating", &"sink", &"clean_plates":
+		&"plating", &"sink", &"clean_plates", &"tomato":
 			_interact_with_kitchen_counter(station.station_type)
 			return
 	if _food_ready_to_plate:
@@ -611,24 +669,45 @@ func _begin_station_minigame(station: KitchenStation) -> void:
 
 func _interact_with_kitchen_counter(counter_type: StringName) -> void:
 	match counter_type:
+		&"tomato":
+			if _holding_tomato:
+				return
+			if _plate_state != PLATE_NONE:
+				_gameplay_hud.set_order_result("Free your hands before taking a tomato.", "READY")
+				return
+			if _tomato_counter and _tomato_counter.has_method("take_tomato"):
+				if not _tomato_counter.take_tomato():
+					_gameplay_hud.set_order_result("The tomato box is empty.", "READY")
+					return
+			_holding_tomato = true
+			_sync_held_tomato_visual()
+			_gameplay_hud.set_order_result("Tomato picked up. Carry it with both hands.", "READY")
 		&"clean_plates":
+			if _holding_tomato:
+				_gameplay_hud.set_order_result("Return the tomato before taking a plate.", "PLATING")
+				return
 			if _plate_state == PLATE_NONE:
 				_plate_state = PLATE_CLEAN
 				_sync_held_plate_visual()
-				_gameplay_hud.set_order_result(
-					"Clean plate picked up. Cook an order, then use the plating counter.", "PLATING"
-				)
-			elif _plate_state == PLATE_WASHED:
-				_plate_state = PLATE_NONE
-				_sync_held_plate_visual()
-				_gameplay_hud.set_order_result(
-					"Washed plate returned. Take a clean plate when ready.", "READY"
-				)
+				if _washed_plate_available:
+					_washed_plate_available = false
+					if _washed_plate_output:
+						_washed_plate_output.visible = false
+					_gameplay_hud.set_order_result(
+						"Washed plate picked up. It is ready for another order.", "PLATING"
+					)
+				else:
+					_gameplay_hud.set_order_result(
+						"Clean plate picked up. Cook an order, then use the plating counter.", "PLATING"
+					)
 			else:
 				_gameplay_hud.set_order_result(
 					"Finish using the plate you are carrying first.", "PLATING"
 				)
 		&"plating":
+			if _holding_tomato:
+				_gameplay_hud.set_order_result("Return the tomato before plating an order.", "PLATING")
+				return
 			if not _food_ready_to_plate:
 				_gameplay_hud.set_order_result("Cook an order before plating food.", "PLATING")
 				return
@@ -640,6 +719,8 @@ func _interact_with_kitchen_counter(counter_type: StringName) -> void:
 			var points := _pending_food_points
 			_plate_state = PLATE_DIRTY
 			_sync_held_plate_visual()
+			if _held_food_visual:
+				_held_food_visual.visible = true
 			_food_ready_to_plate = false
 			_pending_food_points = 0
 			_gameplay_hud.add_points(points)
@@ -650,46 +731,213 @@ func _interact_with_kitchen_counter(counter_type: StringName) -> void:
 			if _plate_state != PLATE_DIRTY:
 				_gameplay_hud.set_order_result("Bring a dirty plate to the sink.", "WASHING")
 				return
-			_plate_state = PLATE_WASHED
+			if _washed_plate_available:
+				_gameplay_hud.set_order_result(
+					"The clean dish rack is full. Take that plate first.", "WASHING"
+				)
+				return
+			_plate_state = PLATE_NONE
+			if _held_food_visual:
+				_held_food_visual.visible = false
 			_sync_held_plate_visual()
+			_washed_plate_available = true
+			if _washed_plate_output:
+				_washed_plate_output.visible = true
 			_gameplay_hud.set_order_result(
-				"Plate washed. Return it to the Clean Plate Counter.", "WASHING"
+				"Plate washed and placed in the clean dish rack.", "WASHING"
 			)
 
 
 func _create_held_plate_visual() -> void:
 	_held_plate_visual = Node3D.new()
 	_held_plate_visual.name = "HeldPlate"
-	_held_plate_visual.position = HELD_PLATE_POSITION
-	_held_plate_visual.rotation = HELD_PLATE_ROTATION
-	_held_plate_visual.scale = Vector3.ONE * HELD_PLATE_SCALE
+	_held_plate_visual.position = _held_plate_position
+	_held_plate_visual.rotation = _held_plate_rotation
+	_held_plate_visual.scale = Vector3.ONE * _held_plate_scale
 	_skeleton.add_child(_held_plate_visual)
 	_held_plate_visual.add_child(
-		_create_plate_layer("Rim", 0.16, 0.025, Color(0.18, 0.48, 0.5, 1), 0.0)
+		_create_plate_layer(
+			"Rim", _held_plate_radius, 0.025, Color(0.18, 0.48, 0.5, 1), 0.0
+		)
 	)
 	_held_plate_visual.add_child(
-		_create_plate_layer("Surface", 0.135, 0.008, Color(0.93, 0.91, 0.82, 1), 0.014)
+		_create_plate_layer(
+			"Surface", _held_plate_radius * 0.9, 0.008, Color(0.93, 0.91, 0.82, 1), 0.014
+		)
 	)
-	_create_plate_hand_ik("Left", "upper_arm.L", "hand.L", HELD_PLATE_HAND_SPAN)
-	_create_plate_hand_ik("Right", "upper_arm.R", "hand.R", -HELD_PLATE_HAND_SPAN)
+	_create_held_food_visual()
+	_create_plate_hand_ik("Left", "upper_arm.L", "hand.L", _held_plate_hand_span)
+	_create_plate_hand_ik("Right", "upper_arm.R", "hand.R", -_held_plate_hand_span)
 	_sync_held_plate_visual()
+
+
+func _apply_level_plate_presentation() -> void:
+	var level_scene := get_tree().current_scene
+	if not level_scene:
+		return
+
+	var plate_position: Variant = level_scene.get_meta(
+		"held_plate_position", HELD_PLATE_POSITION
+	)
+	if plate_position is Vector3:
+		_held_plate_position = plate_position
+
+	var plate_scale: Variant = level_scene.get_meta("held_plate_scale", HELD_PLATE_SCALE)
+	if typeof(plate_scale) == TYPE_FLOAT:
+		_held_plate_scale = plate_scale
+
+	var plate_radius: Variant = level_scene.get_meta("held_plate_radius", 0.16)
+	if typeof(plate_radius) == TYPE_FLOAT:
+		_held_plate_radius = plate_radius
+
+	var plate_hand_span: Variant = level_scene.get_meta(
+		"held_plate_hand_span", HELD_PLATE_HAND_SPAN
+	)
+	if typeof(plate_hand_span) == TYPE_FLOAT:
+		_held_plate_hand_span = plate_hand_span
+
+	var plate_hand_offset: Variant = level_scene.get_meta(
+		"held_plate_hand_offset", Vector3.ZERO
+	)
+	if plate_hand_offset is Vector3:
+		_held_plate_hand_offset = plate_hand_offset
+
+	var plate_hand_rotation: Variant = level_scene.get_meta(
+		"held_plate_hand_rotation", Vector3.ZERO
+	)
+	if plate_hand_rotation is Vector3:
+		_held_plate_hand_rotation = plate_hand_rotation
+
+	var plate_arm_length_scale: Variant = level_scene.get_meta(
+		"held_plate_arm_length_scale", HELD_PLATE_ARM_LENGTH_SCALE
+	)
+	if typeof(plate_arm_length_scale) == TYPE_FLOAT:
+		_held_plate_arm_length_scale = plate_arm_length_scale
+
+	var plate_rotation: Variant = level_scene.get_meta(
+		"held_plate_rotation", HELD_PLATE_ROTATION
+	)
+	if plate_rotation is Vector3:
+		_held_plate_rotation = plate_rotation
 
 
 func _create_plate_hand_ik(
 	side: String, root_bone: String, tip_bone: String, hand_offset: float
 ) -> void:
+	_plate_hand_ik.append(
+		_create_hand_ik(
+			"Plate%sHandTarget" % side,
+			"Plate%sHandIK" % side,
+			root_bone,
+			tip_bone,
+			hand_offset,
+			_held_plate_position + _held_plate_hand_offset,
+			_held_plate_hand_rotation,
+			_held_plate_hand_rotation != Vector3.ZERO
+		)
+	)
+
+
+func _create_held_tomato_visual() -> void:
+	_held_tomato_visual = Node3D.new()
+	_held_tomato_visual.name = "HeldTomato"
+	_held_tomato_visual.position = HELD_PLATE_POSITION
+	_held_tomato_visual.rotation = Vector3.ZERO
+	_held_tomato_visual.scale = Vector3.ONE * 1.8
+	_skeleton.add_child(_held_tomato_visual)
+
+	var tomato_mesh := SphereMesh.new()
+	tomato_mesh.radius = 0.29
+	tomato_mesh.height = 0.56
+	tomato_mesh.radial_segments = 24
+	tomato_mesh.rings = 12
+	var tomato_material := StandardMaterial3D.new()
+	tomato_material.albedo_color = Color(0.92, 0.12, 0.07, 1)
+	tomato_material.roughness = 0.42
+	var tomato := MeshInstance3D.new()
+	tomato.name = "Tomato"
+	tomato.mesh = tomato_mesh
+	tomato.material_override = tomato_material
+	_held_tomato_visual.add_child(tomato)
+
+	var leaf_material := StandardMaterial3D.new()
+	leaf_material.albedo_color = Color(0.16, 0.42, 0.13, 1)
+	leaf_material.roughness = 0.62
+	for leaf_index in range(4):
+		var angle := TAU * float(leaf_index) / 4.0
+		var leaf_mesh := SphereMesh.new()
+		leaf_mesh.radius = 0.1
+		leaf_mesh.height = 0.06
+		leaf_mesh.radial_segments = 10
+		leaf_mesh.rings = 6
+		var leaf := MeshInstance3D.new()
+		leaf.name = "Leaf%d" % leaf_index
+		leaf.mesh = leaf_mesh
+		leaf.material_override = leaf_material
+		leaf.position = Vector3(cos(angle) * 0.08, 0.25, sin(angle) * 0.08)
+		leaf.scale = Vector3(1.5, 0.55, 0.65)
+		leaf.rotation.y = angle
+		_held_tomato_visual.add_child(leaf)
+
+	var stem_mesh := CylinderMesh.new()
+	stem_mesh.top_radius = 0.025
+	stem_mesh.bottom_radius = 0.035
+	stem_mesh.height = 0.08
+	stem_mesh.radial_segments = 10
+	var stem := MeshInstance3D.new()
+	stem.name = "Stem"
+	stem.mesh = stem_mesh
+	stem.material_override = leaf_material
+	stem.position.y = 0.29
+	_held_tomato_visual.add_child(stem)
+
+	_tomato_hand_ik.append(
+		_create_hand_ik(
+			"TomatoLeftHandTarget",
+			"TomatoLeftHandIK",
+			"upper_arm.L",
+			"hand.L",
+			HELD_PLATE_HAND_SPAN,
+			HELD_PLATE_POSITION
+		)
+	)
+	_tomato_hand_ik.append(
+		_create_hand_ik(
+			"TomatoRightHandTarget",
+			"TomatoRightHandIK",
+			"upper_arm.R",
+			"hand.R",
+			-HELD_PLATE_HAND_SPAN,
+			HELD_PLATE_POSITION
+		)
+	)
+	_sync_held_tomato_visual()
+
+
+func _create_hand_ik(
+	target_name: String,
+	ik_name: String,
+	root_bone: String,
+	tip_bone: String,
+	hand_offset: float,
+	center_position: Vector3,
+	target_rotation: Vector3 = Vector3.ZERO,
+	override_tip_basis: bool = false
+) -> SkeletonIK3D:
 	var hand_target := Node3D.new()
-	hand_target.name = "Plate%sHandTarget" % side
-	hand_target.position = HELD_PLATE_POSITION + Vector3(hand_offset, 0.0, 0.0)
+	hand_target.name = target_name
+	hand_target.position = center_position + Vector3(hand_offset, 0.0, 0.0)
+	hand_target.rotation = target_rotation
 	_skeleton.add_child(hand_target)
 
 	var hand_ik := SkeletonIK3D.new()
-	hand_ik.name = "Plate%sHandIK" % side
+	hand_ik.name = ik_name
 	hand_ik.root_bone = root_bone
 	hand_ik.tip_bone = tip_bone
 	hand_ik.target_node = NodePath("../%s" % hand_target.name)
+	hand_ik.override_tip_basis = override_tip_basis
 	_skeleton.add_child(hand_ik)
-	_plate_hand_ik.append(hand_ik)
+	return hand_ik
 
 
 func _create_plate_layer(
@@ -713,16 +961,154 @@ func _create_plate_layer(
 	return layer
 
 
+func _create_held_food_visual() -> void:
+	_held_food_visual = Node3D.new()
+	_held_food_visual.name = "PlatedBurger"
+	_held_food_visual.visible = false
+	_held_plate_visual.add_child(_held_food_visual)
+
+	var bun_material := _create_food_material(Color("#d99948"))
+	var patty_material := _create_food_material(Color("#783c24"))
+	var cheese_material := _create_food_material(Color("#f1c84b"))
+	var lettuce_material := _create_food_material(Color("#69a447"))
+	_add_food_layer("BottomBun", 0.12, 0.05, 0.045, bun_material)
+	_add_food_layer("Patty", 0.115, 0.045, 0.09, patty_material)
+	_add_food_layer("Cheese", 0.14, 0.018, 0.122, cheese_material)
+	_add_food_layer("Lettuce", 0.135, 0.018, 0.14, lettuce_material)
+
+	var bun_mesh := SphereMesh.new()
+	bun_mesh.radius = 0.13
+	bun_mesh.height = 0.12
+	bun_mesh.radial_segments = 24
+	bun_mesh.rings = 12
+	var top_bun := MeshInstance3D.new()
+	top_bun.name = "TopBun"
+	top_bun.mesh = bun_mesh
+	top_bun.material_override = bun_material
+	top_bun.position.y = 0.175
+	top_bun.scale = Vector3(1.0, 0.58, 1.0)
+	_held_food_visual.add_child(top_bun)
+
+
+func _add_food_layer(
+	layer_name: String, radius: float, thickness: float, local_height: float, material: Material
+) -> void:
+	var layer_mesh := CylinderMesh.new()
+	layer_mesh.top_radius = radius
+	layer_mesh.bottom_radius = radius
+	layer_mesh.height = thickness
+	layer_mesh.radial_segments = 24
+	var layer := MeshInstance3D.new()
+	layer.name = layer_name
+	layer.mesh = layer_mesh
+	layer.material_override = material
+	layer.position.y = local_height
+	_held_food_visual.add_child(layer)
+
+
+func _create_food_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.58
+	return material
+
+
 func _sync_held_plate_visual() -> void:
 	var is_holding_plate := _plate_state != PLATE_NONE
 	if _held_plate_visual:
 		_held_plate_visual.visible = is_holding_plate
-	_set_plate_arm_length(HELD_PLATE_ARM_LENGTH_SCALE if is_holding_plate else 1.0)
+	var arm_length_scale := 1.0
+	if is_holding_plate:
+		arm_length_scale = _held_plate_arm_length_scale
+	elif _holding_tomato:
+		arm_length_scale = HELD_PLATE_ARM_LENGTH_SCALE
+	_set_plate_arm_length(arm_length_scale)
 	for hand_ik in _plate_hand_ik:
 		if is_holding_plate:
 			hand_ik.start()
 		else:
 			hand_ik.stop()
+
+
+func _sync_held_tomato_visual() -> void:
+	if _held_tomato_visual:
+		_held_tomato_visual.visible = _holding_tomato
+	var arm_length_scale := 1.0
+	if _plate_state != PLATE_NONE:
+		arm_length_scale = _held_plate_arm_length_scale
+	elif _holding_tomato:
+		arm_length_scale = HELD_PLATE_ARM_LENGTH_SCALE
+	_set_plate_arm_length(arm_length_scale)
+	for hand_ik in _tomato_hand_ik:
+		if _holding_tomato:
+			hand_ik.start()
+		else:
+			hand_ik.stop()
+
+
+func _find_nearby_placed_tomato() -> Node3D:
+	var nearest_tomato: Node3D
+	var nearest_distance := 1.5
+	for node in get_tree().get_nodes_in_group("placed_tomatoes"):
+		var tomato := node as Node3D
+		if not tomato or not is_instance_valid(tomato):
+			continue
+		var offset := tomato.global_position - global_position
+		if absf(offset.y) > 2.0:
+			continue
+		offset.y = 0.0
+		var distance := offset.length()
+		if distance <= nearest_distance:
+			nearest_tomato = tomato
+			nearest_distance = distance
+	return nearest_tomato
+
+
+func _place_tomato_at_station(station: KitchenStation) -> void:
+	var place_position := station.global_position + Vector3.UP * 1.43
+	if station.station_type == &"tomato":
+		place_position = station.global_position + Vector3.UP * 0.72
+	else:
+		var prep_visual := station.get_node_or_null("VegetablePrep") as Node3D
+		if prep_visual:
+			place_position = prep_visual.global_position + Vector3.UP * 0.36
+	_place_tomato_at_position(place_position)
+
+
+func _place_tomato_in_front() -> void:
+	var target := global_position - global_transform.basis.z * 0.85
+	var query := PhysicsRayQueryParameters3D.create(
+		target + Vector3.UP * 1.8, target - Vector3.UP * 1.0
+	)
+	query.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	var place_position := target + Vector3.UP * 0.3
+	if not hit.is_empty():
+		place_position = hit["position"] + hit["normal"] * 0.3
+	_place_tomato_at_position(place_position)
+
+
+func _place_tomato_at_position(place_position: Vector3) -> void:
+	if not _held_tomato_visual:
+		return
+	var placed_tomato := _held_tomato_visual.duplicate() as Node3D
+	placed_tomato.name = "PlacedTomato"
+	placed_tomato.set_script(PLACED_TOMATO_SCRIPT)
+	placed_tomato.position = Vector3.ZERO
+	placed_tomato.rotation = Vector3.ZERO
+	placed_tomato.scale = Vector3.ONE * 0.95
+	placed_tomato.visible = true
+	var current_scene := get_tree().get_current_scene()
+	if not current_scene:
+		placed_tomato.free()
+		return
+	current_scene.add_child(placed_tomato)
+	placed_tomato.global_position = place_position
+	_holding_tomato = false
+	_sync_held_tomato_visual()
+	_gameplay_hud.set_order_result(
+		"Tomato placed. Attack it three times to chop, or pick it up again.", "READY"
+	)
 
 
 func _set_plate_arm_length(scale_y: float) -> void:

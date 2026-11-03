@@ -42,6 +42,13 @@ var _order_data: Array[Dictionary] = [
 		"reward": 100,
 		"accent": Color("#498b00"),
 		"status": "NEXT"
+	},
+	{
+		"name": "WESTERN BURGER",
+		"ingredients": ["bun", "patty", "cheese", "bacon", "onion", "barbecue sauce", "bun"],
+		"reward": 135,
+		"accent": Color("#bd5932"),
+		"status": "NEXT"
 	}
 ]
 var _order_tickets: Array[OrderTicketUI] = []

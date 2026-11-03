@@ -1,0 +1,120 @@
+[gd_scene format=3 uid="uid://bsgox2qr7kscs"]
+
+[ext_resource type="Script" uid="uid://diwlatw2f6wd" path="res://scripts/level/tomato_counter.gd" id="1_station"]
+[ext_resource type="Texture2D" uid="uid://caqiq3pqpwkis" path="res://assets/items/misc/icons/tomato_logo.svg" id="3_logo"]
+
+[sub_resource type="StandardMaterial3D" id="CabinetMaterial"]
+albedo_color = Color(0.42, 0.22, 0.14, 1)
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="CabinetBottomMesh"]
+material = SubResource("CabinetMaterial")
+size = Vector3(1.72, 0.16, 0.82)
+
+[sub_resource type="BoxShape3D" id="CabinetBottomShape"]
+size = Vector3(1.72, 0.16, 0.82)
+
+[sub_resource type="BoxMesh" id="CabinetSideMesh"]
+material = SubResource("CabinetMaterial")
+size = Vector3(0.16, 0.84, 0.82)
+
+[sub_resource type="BoxShape3D" id="CabinetSideShape"]
+size = Vector3(0.16, 0.84, 0.82)
+
+[sub_resource type="BoxMesh" id="CabinetEndMesh"]
+material = SubResource("CabinetMaterial")
+size = Vector3(1.4, 0.84, 0.16)
+
+[sub_resource type="BoxShape3D" id="CabinetEndShape"]
+size = Vector3(1.4, 0.84, 0.16)
+
+[sub_resource type="StandardMaterial3D" id="CountertopMaterial"]
+albedo_color = Color(0.8, 0.77, 0.68, 1)
+roughness = 0.42
+
+[sub_resource type="BoxMesh" id="LidPanelMesh"]
+material = SubResource("CountertopMaterial")
+size = Vector3(1.82, 0.12, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="TomatoRevealMaterial"]
+albedo_color = Color(0.86, 0.12, 0.08, 1)
+roughness = 0.65
+
+[sub_resource type="SphereMesh" id="TomatoRevealMesh"]
+radius = 0.2
+height = 0.38
+radial_segments = 16
+rings = 8
+
+[node name="TomatoCounter" type="Node3D" unique_id=493469761 node_paths=PackedStringArray("lid", "reveal_tomato", "interaction_camera")]
+script = ExtResource("1_station")
+lid = NodePath("LidHinge")
+reveal_tomato = NodePath("TomatoReveal")
+station_name = "Tomato Counter"
+station_type = &"tomato"
+interaction_camera = NodePath("InteractionCamera")
+
+[node name="CounterBody" type="StaticBody3D" parent="." unique_id=1315183741]
+
+[node name="Bottom" type="MeshInstance3D" parent="CounterBody" unique_id=90016087]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.42, 0)
+mesh = SubResource("CabinetBottomMesh")
+
+[node name="BottomCollision" type="CollisionShape3D" parent="CounterBody" unique_id=433124261]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.42, 0)
+shape = SubResource("CabinetBottomShape")
+
+[node name="LeftSide" type="MeshInstance3D" parent="CounterBody" unique_id=1965094028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.78, 0.08, 0)
+mesh = SubResource("CabinetSideMesh")
+
+[node name="LeftSideCollision" type="CollisionShape3D" parent="CounterBody" unique_id=1749566684]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.78, 0.08, 0)
+shape = SubResource("CabinetSideShape")
+
+[node name="RightSide" type="MeshInstance3D" parent="CounterBody" unique_id=2015974175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.78, 0.08, 0)
+mesh = SubResource("CabinetSideMesh")
+
+[node name="RightSideCollision" type="CollisionShape3D" parent="CounterBody" unique_id=865851670]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.78, 0.08, 0)
+shape = SubResource("CabinetSideShape")
+
+[node name="Front" type="MeshInstance3D" parent="CounterBody" unique_id=2031942768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0.33)
+mesh = SubResource("CabinetEndMesh")
+
+[node name="FrontCollision" type="CollisionShape3D" parent="CounterBody" unique_id=1619410607]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0.33)
+shape = SubResource("CabinetEndShape")
+
+[node name="Back" type="MeshInstance3D" parent="CounterBody" unique_id=95690590]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, -0.33)
+mesh = SubResource("CabinetEndMesh")
+
+[node name="BackCollision" type="CollisionShape3D" parent="CounterBody" unique_id=1426866355]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, -0.33)
+shape = SubResource("CabinetEndShape")
+
+[node name="LidHinge" type="Node3D" parent="." unique_id=2041557098]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0.45)
+
+[node name="LidPanel" type="MeshInstance3D" parent="LidHinge" unique_id=2113858142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.45)
+mesh = SubResource("LidPanelMesh")
+
+[node name="TomatoLogo" type="Sprite3D" parent="LidHinge/LidPanel" unique_id=922040260]
+transform = Transform3D(1, 0, 0, 0, 3.1391647e-07, 1, 0, -1, 3.1391647e-07, 0, 0.067, 0)
+cast_shadow = 0
+flip_v = true
+pixel_size = 0.0025
+texture = ExtResource("3_logo")
+
+[node name="TomatoReveal" type="MeshInstance3D" parent="." unique_id=871461129]
+transform = Transform3D(1, 0, 0, 0, 0.72, 0, 0, 0, 1, 0, -0.11, 0)
+visible = false
+material_override = SubResource("TomatoRevealMaterial")
+mesh = SubResource("TomatoRevealMesh")
+
+[node name="InteractionCamera" type="Marker3D" parent="." unique_id=256720581]
+transform = Transform3D(-1, 1.7583444e-07, -2.7432617e-07, 0, 0.841901, 0.539632, 3.2584137e-07, 0.539632, -0.841901, 0, 1.95, -0.8)

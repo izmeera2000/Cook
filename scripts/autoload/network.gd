@@ -11,11 +11,13 @@ const MAX_ADDRESS_LENGTH := 253
 const DEFAULT_MAP_ID := "kitchen"
 const MAP_SCENE_PATHS := {
 	"kitchen": "res://scenes/level/kitchen_map.tscn",
-	"island": "res://scenes/level/island_kitchen_map.tscn"
+	"island": "res://scenes/level/island_kitchen_map.tscn",
+	"ping": "res://scenes/level/levelping2.tscn"
 }
 const MAP_DISPLAY_NAMES := {
 	"kitchen": "Kitchen Map",
-	"island": "Island Kitchen"
+	"island": "Island Kitchen",
+	"ping": "Ping Kitchen"
 }
 
 var players = {}
@@ -163,7 +165,7 @@ func sanitize_player_info(info: Dictionary, fallback_nick: String) -> Dictionary
 
 
 func get_map_ids() -> Array[String]:
-	return ["kitchen", "island"]
+	return ["kitchen", "island","ping"]
 
 
 func get_map_display_name(map_id: String) -> String:

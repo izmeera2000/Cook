@@ -4,13 +4,49 @@
 [ext_resource type="PackedScene" path="res://scenes/level/counters/sink_counter.tscn" id="2_sink"]
 [ext_resource type="PackedScene" path="res://scenes/level/counters/clean_plate_counter.tscn" id="3_clean_plates"]
 
+[sub_resource type="StandardMaterial3D" id="IntegratedSteelMaterial"]
+albedo_color = Color(0.58, 0.63, 0.65, 1)
+metallic = 0.72
+roughness = 0.28
+
+[sub_resource type="BoxMesh" id="IntegratedCabinetMesh"]
+material = SubResource("IntegratedSteelMaterial")
+size = Vector3(1.72, 1, 0.82)
+
+[sub_resource type="BoxShape3D" id="IntegratedCabinetShape"]
+size = Vector3(1.72, 1, 0.82)
+
+[sub_resource type="BoxMesh" id="IntegratedCountertopMesh"]
+material = SubResource("IntegratedSteelMaterial")
+size = Vector3(1.82, 0.12, 0.9)
+
+[sub_resource type="BoxShape3D" id="IntegratedCountertopShape"]
+size = Vector3(1.82, 0.12, 0.9)
+
 [node name="ServiceCounterLayout" type="Node3D"]
+
+[node name="IntegratedSinkCounter" type="StaticBody3D" parent="."]
+position = Vector3(0, 0.5, 0)
+
+[node name="CabinetCollision" type="CollisionShape3D" parent="IntegratedSinkCounter"]
+shape = SubResource("IntegratedCabinetShape")
+
+[node name="Cabinet" type="MeshInstance3D" parent="IntegratedSinkCounter"]
+mesh = SubResource("IntegratedCabinetMesh")
+
+[node name="CountertopCollision" type="CollisionShape3D" parent="IntegratedSinkCounter"]
+position = Vector3(0, 0.56, 0)
+shape = SubResource("IntegratedCountertopShape")
+
+[node name="Countertop" type="MeshInstance3D" parent="IntegratedSinkCounter"]
+position = Vector3(0, 0.56, 0)
+mesh = SubResource("IntegratedCountertopMesh")
 
 [node name="PlatingCounter" parent="." instance=ExtResource("1_plating")]
 position = Vector3(-2, 0, 0)
 
-[node name="SinkCounter" parent="." instance=ExtResource("2_sink")]
-position = Vector3(0, 0, 0)
+[node name="SinkCounter" parent="IntegratedSinkCounter" instance=ExtResource("2_sink")]
+position = Vector3(-0.43, -0.5, 0)
 
-[node name="CleanPlateCounter" parent="." instance=ExtResource("3_clean_plates")]
-position = Vector3(2, 0, 0)
+[node name="CleanPlateCounter" parent="IntegratedSinkCounter" instance=ExtResource("3_clean_plates")]
+position = Vector3(0.43, -0.5, 0)

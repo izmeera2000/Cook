@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://scenes/level/counters/kitchen_station_layout.tscn" id="1_kitchen_layout"]
 [ext_resource type="PackedScene" path="res://scenes/level/counters/service_counter_layout.tscn" id="2_service_layout"]
+[ext_resource type="PackedScene" path="res://scenes/level/counters/ingredient_storage_counter.tscn" id="3_ingredient_storage"]
 
 [sub_resource type="BoxShape3D" id="FloorCollision"]
 size = Vector3(10, 0.4, 10)
@@ -127,56 +128,10 @@ mesh = SubResource("FloorMesh")
 
 [node name="FloorTiles" type="Node3D" parent="." unique_id=96128183]
 
-[node name="Tile_0_0" type="MeshInstance3D" parent="FloorTiles" unique_id=1277325650]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.012, -4)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("FloorMaterial")
-
-[node name="Tile_0_1" type="MeshInstance3D" parent="FloorTiles" unique_id=523537055]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.012, -2)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("AlternateTileMaterial")
-
-[node name="Tile_0_2" type="MeshInstance3D" parent="FloorTiles" unique_id=1972308079]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.012, 0)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("FloorMaterial")
-
-[node name="Tile_0_3" type="MeshInstance3D" parent="FloorTiles" unique_id=787364085]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.012, 2)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("AlternateTileMaterial")
-
-[node name="Tile_0_4" type="MeshInstance3D" parent="FloorTiles" unique_id=1720259903]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.012, 4)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("FloorMaterial")
-
-[node name="Tile_1_0" type="MeshInstance3D" parent="FloorTiles" unique_id=1998492438]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.012, -4)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("AlternateTileMaterial")
-
-[node name="Tile_1_1" type="MeshInstance3D" parent="FloorTiles" unique_id=511653281]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.012, -2)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("FloorMaterial")
-
-[node name="Tile_1_2" type="MeshInstance3D" parent="FloorTiles" unique_id=669979513]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.012, 0)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("AlternateTileMaterial")
-
-[node name="Tile_1_3" type="MeshInstance3D" parent="FloorTiles" unique_id=1430956897]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.012, 2)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("FloorMaterial")
-
-[node name="Tile_1_4" type="MeshInstance3D" parent="FloorTiles" unique_id=70285022]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.012, 4)
-mesh = SubResource("TileMesh")
-surface_material_override/0 = SubResource("AlternateTileMaterial")
-
+[node name="IngredientStorageCounter" parent="KitchenCounters" instance=ExtResource("3_ingredient_storage")]
+position = Vector3(-4.05, 0.5, 0.2)
+rotation = Vector3(0, 3.141593, 0)
+rotation = Vector3(0, 3.141593, 0)
 [node name="Tile_2_0" type="MeshInstance3D" parent="FloorTiles" unique_id=786522989]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, -4)
 mesh = SubResource("TileMesh")
@@ -294,57 +249,6 @@ position = Vector3(0, 0, -3)
 position = Vector3(0, 0, 4)
 
 [node name="SideCounters" type="Node3D" parent="KitchenCounters" unique_id=1684248475]
-
-[node name="LeftCounter_1" type="StaticBody3D" parent="KitchenCounters/SideCounters" unique_id=2023169814]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 0.5, -1.6)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="KitchenCounters/SideCounters/LeftCounter_1" unique_id=2095188276]
-shape = SubResource("SideCabinetCollision")
-
-[node name="Cabinet" type="MeshInstance3D" parent="KitchenCounters/SideCounters/LeftCounter_1" unique_id=1973173859]
-mesh = SubResource("SideCabinetMesh")
-
-[node name="TopCollision" type="CollisionShape3D" parent="KitchenCounters/SideCounters/LeftCounter_1" unique_id=861758959]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-shape = SubResource("SideCountertopCollision")
-
-[node name="Countertop" type="MeshInstance3D" parent="KitchenCounters/SideCounters/LeftCounter_1" unique_id=1312349028]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-mesh = SubResource("SideCountertopMesh")
-
-[node name="LeftCounter_2" type="StaticBody3D" parent="KitchenCounters/SideCounters" unique_id=950085637]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 0.5, 0.2)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="KitchenCounters/SideCounters/LeftCounter_2" unique_id=1352223422]
-shape = SubResource("SideCabinetCollision")
-
-[node name="Cabinet" type="MeshInstance3D" parent="KitchenCounters/SideCounters/LeftCounter_2" unique_id=4141548]
-mesh = SubResource("SideCabinetMesh")
-
-[node name="TopCollision" type="CollisionShape3D" parent="KitchenCounters/SideCounters/LeftCounter_2" unique_id=700664907]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-shape = SubResource("SideCountertopCollision")
-
-[node name="Countertop" type="MeshInstance3D" parent="KitchenCounters/SideCounters/LeftCounter_2" unique_id=1882291667]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-mesh = SubResource("SideCountertopMesh")
-
-[node name="LeftCounter_3" type="StaticBody3D" parent="KitchenCounters/SideCounters" unique_id=781089661]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 0.5, 2)
-
-[node name="CabinetCollision" type="CollisionShape3D" parent="KitchenCounters/SideCounters/LeftCounter_3" unique_id=237511283]
-shape = SubResource("SideCabinetCollision")
-
-[node name="Cabinet" type="MeshInstance3D" parent="KitchenCounters/SideCounters/LeftCounter_3" unique_id=47749589]
-mesh = SubResource("SideCabinetMesh")
-
-[node name="TopCollision" type="CollisionShape3D" parent="KitchenCounters/SideCounters/LeftCounter_3" unique_id=339622404]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-shape = SubResource("SideCountertopCollision")
-
-[node name="Countertop" type="MeshInstance3D" parent="KitchenCounters/SideCounters/LeftCounter_3" unique_id=486904054]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.56, 0)
-mesh = SubResource("SideCountertopMesh")
 
 [node name="RightCounter_1" type="StaticBody3D" parent="KitchenCounters/SideCounters" unique_id=115516206]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.05, 0.5, -1.6)
