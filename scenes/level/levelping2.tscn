@@ -71,11 +71,11 @@ size = Vector3(0.95, 2.15, 0.85)
 metadata/held_plate_scale = 4.08
 metadata/held_plate_radius = 0.22
 metadata/held_plate_hand_span = 0.714
-metadata/held_plate_position = Vector3(0, 1.48, 1.45)
+metadata/held_plate_position = Vector3(0, 1.48, -1.7)
 metadata/held_plate_rotation = Vector3(0, 0, 0)
 metadata/held_plate_hand_offset = Vector3(0, -0.12, 0.12)
 metadata/held_plate_hand_rotation = Vector3(-1.570796, 0, 0)
-metadata/held_plate_arm_length_scale = 1.4
+metadata/held_plate_arm_length_scale = 2.4
 
 [node name="Floor" type="StaticBody3D" parent="." unique_id=365547758]
 collision_layer = 2
