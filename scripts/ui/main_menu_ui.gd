@@ -1,7 +1,7 @@
 class_name MainMenuUI
 extends Control
 
-signal host_pressed(nickname: String, skin: String, map_id: String)
+signal host_pressed(nickname: String, skin: String, map_id: String, control_mode: String)
 signal join_pressed(nickname: String, skin: String, address: String)
 signal quit_pressed
 
@@ -10,6 +10,7 @@ const SAFE_AREA_MARGIN := 24.0
 
 @onready var skin_input: OptionButton = $MainContainer/MainMenu/Form/Option2/SkinInput
 @onready var map_input: OptionButton = $MainContainer/MainMenu/Form/Option5/MapInput
+@onready var control_mode_input: OptionButton = $MainContainer/MainMenu/Form/Option6/ControlModeInput
 @onready var nick_input: LineEdit = $MainContainer/MainMenu/Form/Option1/NickInput
 @onready var address_input: LineEdit = $MainContainer/MainMenu/Form/Option3/AddressInput
 @onready var main_container: VBoxContainer = $MainContainer
@@ -24,6 +25,11 @@ func _ready() -> void:
 		map_input.add_item(Network.get_map_display_name(map_id))
 		map_input.set_item_metadata(map_input.item_count - 1, map_id)
 	map_input.select(0)
+	control_mode_input.add_item("Advanced")
+	control_mode_input.set_item_metadata(0, Network.CONTROL_MODE_ADVANCED)
+	control_mode_input.add_item("Simple")
+	control_mode_input.set_item_metadata(1, Network.CONTROL_MODE_SIMPLE)
+	control_mode_input.select(0)
 	resized.connect(_update_responsive_layout)
 	call_deferred("_update_responsive_layout")
 
@@ -31,7 +37,7 @@ func _ready() -> void:
 func _on_host_pressed() -> void:
 	var nickname = nick_input.text.strip_edges()
 	var skin = get_skin()
-	host_pressed.emit(nickname, skin, get_map_id())
+	host_pressed.emit(nickname, skin, get_map_id(), get_control_mode())
 
 
 func _on_join_pressed() -> void:
@@ -80,3 +86,11 @@ func get_map_id() -> String:
 	if map_input.selected < 0:
 		return Network.DEFAULT_MAP_ID
 	return Network.sanitize_map_id(str(map_input.get_item_metadata(map_input.selected)))
+
+
+func get_control_mode() -> String:
+	if control_mode_input.selected < 0:
+		return Network.CONTROL_MODE_ADVANCED
+	return Network.sanitize_control_mode(
+		str(control_mode_input.get_item_metadata(control_mode_input.selected))
+	)

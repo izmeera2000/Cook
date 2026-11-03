@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://0tmnkelmafj4" path="res://scripts/ui/gameplay_hud_ui.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/ui/power_cards_ui.tscn" id="2_power_cards"]
 [ext_resource type="PackedScene" path="res://scenes/ui/order_ticket_ui.tscn" id="3_order_ticket"]
+[ext_resource type="Script" path="res://scripts/ui/mobile_joystick.gd" id="4_mobile_joystick"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
 content_margin_left = 12.0
@@ -121,6 +122,32 @@ mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 20
 text = "POWERS
 SEE ALL"
+
+[node name="MobileJoystick" type="Control" parent="Screen"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -220.0
+offset_right = 220.0
+offset_bottom = -28.0
+grow_vertical = 0
+mouse_filter = 0
+script = ExtResource("4_mobile_joystick")
+
+[node name="MobileInteractButton" type="Button" parent="Screen"]
+anchors_preset = 15
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -204.0
+offset_top = -204.0
+offset_right = -24.0
+offset_bottom = -128.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "INTERACT"
 
 [node name="OrderPopup" type="Control" parent="Screen" unique_id=2046926671]
 visible = false

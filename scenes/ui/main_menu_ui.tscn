@@ -280,6 +280,33 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_field_focus")
 theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
 
+[node name="Option6" type="HBoxContainer" parent="MainContainer/MainMenu/Form"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="MainContainer/MainMenu/Form/Option6"]
+layout_mode = 2
+custom_minimum_size = Vector2(146, 0)
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.87, 0.9, 0.84, 1)
+theme_override_font_sizes/font_size = 22
+text = "Host Controls : "
+horizontal_alignment = 2
+
+[node name="ControlModeInput" type="OptionButton" parent="MainContainer/MainMenu/Form/Option6"]
+layout_mode = 2
+custom_minimum_size = Vector2(280, 48)
+size_flags_horizontal = 4
+tooltip_text = "The host chooses controls for everyone in the session."
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_field")
+theme_override_styles/hover = SubResource("StyleBoxFlat_field_focus")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_field_focus")
+theme_override_styles/focus = SubResource("StyleBoxFlat_field_focus")
+
 [node name="HSeparator2" type="HSeparator" parent="MainContainer/MainMenu/Form" unique_id=1512408463]
 layout_mode = 2
 theme_override_constants/separation = 10

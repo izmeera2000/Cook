@@ -109,6 +109,9 @@ func _reset_session_ui() -> void:
 
 func _on_player_connected(peer_id, player_info):
 	if peer_id == 1 and not multiplayer.is_server():
+		Network.session_control_mode = Network.sanitize_control_mode(
+			str(player_info.get("control_mode", Network.CONTROL_MODE_ADVANCED))
+		)
 		if not _set_active_map(str(player_info.get("map_id", Network.DEFAULT_MAP_ID))):
 			return
 	var player = _add_player(peer_id, player_info)
@@ -145,12 +148,12 @@ func _set_active_map(map_id: String) -> bool:
 	return true
 
 
-func _on_host_pressed(nickname: String, skin: String, map_id: String):
+func _on_host_pressed(nickname: String, skin: String, map_id: String, control_mode: String):
 	if not _set_active_map(map_id):
 		main_menu.show_menu()
 		_update_mouse_mode()
 		return
-	var error = Network.start_host(nickname, skin, map_id)
+	var error = Network.start_host(nickname, skin, map_id, control_mode)
 	if error:
 		push_warning("Failed to host game. Error: " + str(error))
 		main_menu.show_menu()
