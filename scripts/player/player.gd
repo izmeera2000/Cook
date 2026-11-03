@@ -23,11 +23,12 @@ const STATION_MINIGAME_ROUNDS := 3
 const PLATE_NONE := &"none"
 const PLATE_CLEAN := &"clean"
 const PLATE_DIRTY := &"dirty"
+const PLATE_WASHED := &"washed"
 const WOK_MOUSE_SHAKE_DISTANCE := 72.0
 const WOK_MOUSE_SHAKE_WINDOW := 0.35
 const WOK_SHAKE_COOLDOWN := 0.45
-const WOK_PHONE_SHAKE_THRESHOLD := 3.8
-const WOK_PHONE_BASELINE_SPEED := 2.5
+const WOK_PHONE_SHAKE_THRESHOLD := 2.5
+const WOK_PHONE_BASELINE_SPEED := 4.0
 const ALLOWED_ANIMATION_STATES := {
 	&"Idle": true,
 	&"Run": true,
@@ -54,10 +55,11 @@ const BACK_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/BackAttach/"
 const FIRST_PERSON_HIDDEN_BONES: Array[StringName] = [&"Head", &"HeadTop"]
 const HELD_PLATE_POSITION := Vector3(0.0, 1.48, 0.4)
 const HELD_PLATE_ROTATION := Vector3(deg_to_rad(20.0), 0.0, 0.0)
-const HELD_PLATE_SCALE := 2.0
-const HELD_PLATE_HAND_SPAN := 0.48
+const HELD_PLATE_SCALE := 2.8
+const HELD_PLATE_HAND_SPAN := 0.53
 const HELD_PLATE_ARM_LENGTH_SCALE := 1.2
 const PLACED_TOMATO_SCRIPT: Script = preload("res://scripts/level/placed_tomato.gd")
+const PLATED_FOOD_MODEL: PackedScene = preload("res://assets/items/misc/models/chicken_leg.fbx")
 
 @export var skin_color: SkinColor = SkinColor.BLUE
 
@@ -100,7 +102,8 @@ var _equipped_hat_visual_id := ""
 var _active_kitchen_station: KitchenStation
 var _plate_state: StringName = PLATE_NONE
 var _food_ready_to_plate := false
-var _pending_food_points := 0
+var _ready_food_points: Array[int] = []
+var _simple_station_jobs: Dictionary = {}
 var _held_plate_visual: Node3D
 var _held_plate_position: Vector3 = HELD_PLATE_POSITION
 var _held_plate_rotation: Vector3 = HELD_PLATE_ROTATION
@@ -110,15 +113,15 @@ var _held_plate_hand_span: float = HELD_PLATE_HAND_SPAN
 var _held_plate_hand_offset := Vector3.ZERO
 var _held_plate_hand_rotation := Vector3.ZERO
 var _held_plate_arm_length_scale: float = HELD_PLATE_ARM_LENGTH_SCALE
-var _held_food_visual: Node3D
+var _plated_food_visual: Node3D
+var _plated_food_type: StringName = &""
 var _plate_hand_ik: Array[SkeletonIK3D] = []
-var _washed_plate_available := false
-var _washed_plate_output: MeshInstance3D
 var _holding_tomato := false
 var _held_tomato_visual: Node3D
 var _tomato_hand_ik: Array[SkeletonIK3D] = []
 var _tomato_counter: Node3D
 var _station_minigame_action_requested := false
+var _mobile_interact_requested := false
 var _station_minigame_time := 0.0
 var _station_minigame_rounds_won := 0
 var _station_minigame_misses := 0
@@ -156,6 +159,7 @@ func _input(event: InputEvent) -> void:
 		or not _active_kitchen_station
 		or _active_kitchen_station.station_type != &"wok"
 		or _active_kitchen_station.is_wok_finished()
+		or OS.has_feature("mobile")
 		or _wok_shake_cooldown > 0.0
 	):
 		return
@@ -172,7 +176,6 @@ func _ready():
 	_apply_level_plate_presentation()
 	_create_held_plate_visual()
 	_create_held_tomato_visual()
-	_washed_plate_output = get_tree().get_first_node_in_group("washed_plate_output") as MeshInstance3D
 	_tomato_counter = get_tree().get_first_node_in_group("tomato_counters") as Node3D
 	_gameplay_hud.visible = is_multiplayer_authority() and DisplayServer.get_name() != "headless"
 	_cooking_minigame_ui.visible = (
@@ -181,6 +184,7 @@ func _ready():
 	if is_multiplayer_authority():
 		_gameplay_hud.set_cards(_power_cards)
 		_gameplay_hud.power_card_activated.connect(_activate_power_card)
+		_gameplay_hud.interact_pressed.connect(_on_mobile_interact_pressed)
 		_cooking_minigame_ui.action_pressed.connect(_on_station_ui_action_pressed)
 		_cooking_minigame_ui.leave_station_pressed.connect(_finish_station_minigame.bind(false))
 
@@ -250,6 +254,9 @@ func _physics_process(delta):
 	if not multiplayer.has_multiplayer_peer() or not is_multiplayer_authority():
 		return
 
+	if Network.session_control_mode == Network.CONTROL_MODE_SIMPLE:
+		_process_simple_station_jobs(delta)
+
 	if _active_kitchen_station:
 		for card_index in range(_power_cards.size()):
 			if Input.is_action_just_pressed("power_card_" + str(card_index + 1)):
@@ -288,7 +295,8 @@ func _physics_process(delta):
 			_activate_power_card(card_index)
 			return
 
-	if Input.is_action_just_pressed("pickup") and is_on_floor():
+	var interact_pressed := Input.is_action_just_pressed("pickup") or _consume_mobile_interact()
+	if interact_pressed and is_on_floor():
 		var nearby_station := _find_nearby_kitchen_station()
 		if _holding_tomato:
 			if nearby_station:
@@ -307,7 +315,7 @@ func _physics_process(delta):
 			_begin_station_minigame(nearby_station)
 			return
 
-	if Input.is_action_just_pressed("pickup") and is_on_floor() and _has_collectible_item_in_front():
+	if interact_pressed and is_on_floor() and _has_collectible_item_in_front():
 		is_collecting = true
 		_request_animation(&"Emote2", true)
 		return
@@ -572,18 +580,26 @@ func _update_station_prompt() -> void:
 						else "E  -  Plate food (needs cooked food and clean plate)"
 					)
 				&"sink":
-					prompt = "E  -  Wash plate" if _plate_state == PLATE_DIRTY else "E  -  Wash dirty plate"
+					prompt = (
+						"E  -  Wash plate"
+						if _plate_state == PLATE_DIRTY
+						else "E  -  Wash dirty plate"
+					)
 				&"clean_plates":
-					if _plate_state == PLATE_NONE:
-						prompt = (
-							"E  -  Take washed plate"
-							if _washed_plate_available
-							else "E  -  Take clean plate"
-						)
-					else:
-						prompt = "E  -  Finish using your plate"
+					prompt = (
+						"E  -  Return washed plate"
+						if _plate_state == PLATE_WASHED
+						else "E  -  Take clean plate"
+						if _plate_state == PLATE_NONE
+						else "E  -  Finish using your plate"
+					)
 				&"tomato":
 					prompt = "E  -  Take tomato"
+			if Network.session_control_mode == Network.CONTROL_MODE_SIMPLE:
+				var job_id := station.get_instance_id()
+				if _simple_station_jobs.has(job_id):
+					var job: Dictionary = _simple_station_jobs[job_id]
+					prompt = "E  -  Collect cooked food" if job["finished"] else "Cooking..."
 		_cooking_minigame_ui.set_interaction_prompt(prompt, true)
 	else:
 		_cooking_minigame_ui.set_interaction_prompt("", false)
@@ -606,6 +622,9 @@ func _begin_station_minigame(station: KitchenStation) -> void:
 		&"plating", &"sink", &"clean_plates", &"tomato":
 			_interact_with_kitchen_counter(station.station_type)
 			return
+	if Network.session_control_mode == Network.CONTROL_MODE_SIMPLE:
+		_interact_with_simple_station(station)
+		return
 	if _food_ready_to_plate:
 		_gameplay_hud.set_order_result(
 			"Plate the prepared food before starting another order.", "READY TO PLATE"
@@ -667,6 +686,100 @@ func _begin_station_minigame(station: KitchenStation) -> void:
 	_request_animation(&"Idle")
 
 
+func _interact_with_simple_station(station: KitchenStation) -> void:
+	var station_id := station.get_instance_id()
+	if _simple_station_jobs.has(station_id):
+		var job: Dictionary = _simple_station_jobs[station_id]
+		if job["finished"]:
+			_claim_simple_station_job(station, job)
+		return
+
+	var cooking_speed := _get_cooking_speed_multiplier()
+	match station.station_type:
+		&"grill":
+			if not station.start_grill():
+				return
+		&"wok":
+			if not station.start_wok():
+				return
+		&"prep":
+			if not station.start_vegetable_prep():
+				return
+
+	var reward := 50
+	match station.station_type:
+		&"grill":
+			reward = 100
+		&"wok":
+			reward = 75
+		&"prep":
+			reward = 60
+	_simple_station_jobs[station_id] = {
+		"station": station,
+		"progress": 0.0,
+		"elapsed": 0.0,
+		"finished": false,
+		"reward": reward,
+		"cooking_speed": cooking_speed
+	}
+	_gameplay_hud.show_station_progress(station, 0.0, false)
+
+
+func _claim_simple_station_job(station: KitchenStation, job: Dictionary) -> void:
+	match station.station_type:
+		&"grill":
+			station.abort_grill()
+		&"wok":
+			station.abort_wok()
+		&"prep":
+			station.abort_vegetable_prep()
+	_gameplay_hud.hide_station_progress(station)
+	_simple_station_jobs.erase(station.get_instance_id())
+	_queue_food_for_plating(int(job["reward"]))
+
+
+func _process_simple_station_jobs(delta: float) -> void:
+	for station_id in _simple_station_jobs.keys():
+		var job: Dictionary = _simple_station_jobs[station_id]
+		var station := job["station"] as KitchenStation
+		if not is_instance_valid(station):
+			_simple_station_jobs.erase(station_id)
+			continue
+		if job["finished"]:
+			_gameplay_hud.show_station_progress(station, 1.0, true)
+			continue
+
+		var cooking_speed := float(job["cooking_speed"])
+		var is_finished := false
+		match station.station_type:
+			&"grill":
+				is_finished = station.advance_grill_simple(delta, cooking_speed)
+				var doneness := station.get_grill_side_doneness()
+				job["progress"] = clampf(
+					(doneness[0] + doneness[1])
+					/ (KitchenStation.GRILL_IDEAL_DONENESS_MIN * 2.0),
+					0.0,
+					1.0
+				)
+			&"wok":
+				is_finished = station.advance_wok_simple(delta, cooking_speed)
+				job["progress"] = station.get_wok_progress()
+			&"prep":
+				is_finished = station.advance_prep_simple(delta, cooking_speed)
+				job["progress"] = station.get_prep_progress()
+			_:
+				job["elapsed"] = float(job["elapsed"]) + delta * cooking_speed
+				job["progress"] = minf(float(job["elapsed"]) / 3.0, 1.0)
+				is_finished = float(job["progress"]) >= 1.0
+		if is_finished:
+			job["finished"] = true
+			station.complete_minigame(true)
+		_simple_station_jobs[station_id] = job
+		_gameplay_hud.show_station_progress(
+			station, float(job["progress"]), bool(job["finished"])
+		)
+
+
 func _interact_with_kitchen_counter(counter_type: StringName) -> void:
 	match counter_type:
 		&"tomato":
@@ -689,17 +802,17 @@ func _interact_with_kitchen_counter(counter_type: StringName) -> void:
 			if _plate_state == PLATE_NONE:
 				_plate_state = PLATE_CLEAN
 				_sync_held_plate_visual()
-				if _washed_plate_available:
-					_washed_plate_available = false
-					if _washed_plate_output:
-						_washed_plate_output.visible = false
+				if not _put_ready_food_on_plate():
 					_gameplay_hud.set_order_result(
-						"Washed plate picked up. It is ready for another order.", "PLATING"
+						"Clean plate picked up. Cook food to put it on your plate.", "PLATING"
 					)
-				else:
-					_gameplay_hud.set_order_result(
-						"Clean plate picked up. Cook an order, then use the plating counter.", "PLATING"
-					)
+			elif _plate_state == PLATE_WASHED:
+				_plate_state = PLATE_NONE
+				_plated_food_type = &""
+				_sync_held_plate_visual()
+				_gameplay_hud.set_order_result(
+					"Washed plate returned. Take a clean plate when ready.", "READY"
+				)
 			else:
 				_gameplay_hud.set_order_result(
 					"Finish using the plate you are carrying first.", "PLATING"
@@ -711,41 +824,38 @@ func _interact_with_kitchen_counter(counter_type: StringName) -> void:
 			if not _food_ready_to_plate:
 				_gameplay_hud.set_order_result("Cook an order before plating food.", "PLATING")
 				return
-			if _plate_state != PLATE_CLEAN:
-				_gameplay_hud.set_order_result(
-					"Take a clean plate from the Clean Plate Counter first.", "PLATING"
-				)
-				return
-			var points := _pending_food_points
-			_plate_state = PLATE_DIRTY
-			_sync_held_plate_visual()
-			if _held_food_visual:
-				_held_food_visual.visible = true
-			_food_ready_to_plate = false
-			_pending_food_points = 0
-			_gameplay_hud.add_points(points)
-			_gameplay_hud.set_order_result(
-				"Order complete! +%d points. Wash the plate at the sink." % points, "SERVED"
-			)
+			if not _put_ready_food_on_plate():
+				if _plate_state != PLATE_CLEAN:
+					_gameplay_hud.set_order_result(
+						"Take a clean plate from the Clean Plate Counter first.", "PLATING"
+					)
+			return
 		&"sink":
 			if _plate_state != PLATE_DIRTY:
 				_gameplay_hud.set_order_result("Bring a dirty plate to the sink.", "WASHING")
 				return
-			if _washed_plate_available:
-				_gameplay_hud.set_order_result(
-					"The clean dish rack is full. Take that plate first.", "WASHING"
-				)
-				return
-			_plate_state = PLATE_NONE
-			if _held_food_visual:
-				_held_food_visual.visible = false
+			_plate_state = PLATE_WASHED
 			_sync_held_plate_visual()
-			_washed_plate_available = true
-			if _washed_plate_output:
-				_washed_plate_output.visible = true
 			_gameplay_hud.set_order_result(
-				"Plate washed and placed in the clean dish rack.", "WASHING"
+				"Plate washed. Return it to the Clean Plate Counter.", "WASHING"
 			)
+
+
+func _put_ready_food_on_plate() -> bool:
+	if _plate_state != PLATE_CLEAN or _ready_food_points.is_empty():
+		return false
+	var points: int = _ready_food_points.pop_front()
+	_plated_food_type = _food_type_for_points(points)
+	_plate_state = PLATE_DIRTY
+	_sync_held_plate_visual()
+	_food_ready_to_plate = not _ready_food_points.is_empty()
+	_gameplay_hud.add_points(points)
+	_gameplay_hud.set_order_result(
+		"Food placed on your plate! +%d points. %sWash the plate at the sink."
+		% [points, "More cooked food is ready. " if _food_ready_to_plate else ""],
+		"SERVED"
+	)
+	return true
 
 
 func _create_held_plate_visual() -> void:
@@ -757,15 +867,35 @@ func _create_held_plate_visual() -> void:
 	_skeleton.add_child(_held_plate_visual)
 	_held_plate_visual.add_child(
 		_create_plate_layer(
-			"Rim", _held_plate_radius, 0.025, Color(0.18, 0.48, 0.5, 1), 0.0
+			"Foot", _held_plate_radius * 0.676, 0.018, Color("#c7c1af"), -0.02
 		)
 	)
 	_held_plate_visual.add_child(
-		_create_plate_layer(
-			"Surface", _held_plate_radius * 0.9, 0.008, Color(0.93, 0.91, 0.82, 1), 0.014
-		)
+		_create_plate_layer("PlateBody", _held_plate_radius, 0.026, Color("#e7e2d4"), 0.0)
 	)
-	_create_held_food_visual()
+	var rim_mesh := TorusMesh.new()
+	rim_mesh.inner_radius = _held_plate_radius * 0.853
+	rim_mesh.outer_radius = _held_plate_radius
+	var rim_material := StandardMaterial3D.new()
+	rim_material.albedo_color = Color("#d0c8b6")
+	rim_material.roughness = 0.28
+	var rim := MeshInstance3D.new()
+	rim.name = "PlateRim"
+	rim.position.y = 0.014
+	rim.mesh = rim_mesh
+	rim.material_override = rim_material
+	_held_plate_visual.add_child(rim)
+
+	var well_material := StandardMaterial3D.new()
+	well_material.albedo_color = Color("#eeeade")
+	well_material.roughness = 0.3
+	var well := _create_plate_layer(
+		"PlateWell", _held_plate_radius * 0.794, 0.006, Color("#eeeade"), 0.015
+	)
+	well.material_override = well_material
+	_held_plate_visual.add_child(well)
+	_create_plated_food_visual()
+	_create_dirty_plate_residue()
 	_create_plate_hand_ik("Left", "upper_arm.L", "hand.L", _held_plate_hand_span)
 	_create_plate_hand_ik("Right", "upper_arm.R", "hand.R", -_held_plate_hand_span)
 	_sync_held_plate_visual()
@@ -961,68 +1091,198 @@ func _create_plate_layer(
 	return layer
 
 
-func _create_held_food_visual() -> void:
-	_held_food_visual = Node3D.new()
-	_held_food_visual.name = "PlatedBurger"
-	_held_food_visual.visible = false
-	_held_plate_visual.add_child(_held_food_visual)
+func _create_dirty_plate_residue() -> void:
+	var residue := Node3D.new()
+	residue.name = "FoodResidue"
+	residue.position.y = 0.021
+	_held_plate_visual.add_child(residue)
+	var residue_colors: Array[Color] = [
+		Color("#8d4a2d"),
+		Color("#b96c36"),
+		Color("#71803a"),
+		Color("#d2a64a")
+	]
+	var residue_positions: Array[Vector2] = [
+		Vector2(-0.055, -0.025),
+		Vector2(0.035, -0.045),
+		Vector2(0.065, 0.035),
+		Vector2(-0.02, 0.065)
+	]
+	for index in range(residue_colors.size()):
+		var material := StandardMaterial3D.new()
+		material.albedo_color = residue_colors[index]
+		material.roughness = 0.92
+		var crumb_mesh := SphereMesh.new()
+		crumb_mesh.radius = 0.035 if index < 3 else 0.045
+		crumb_mesh.height = 0.025
+		var crumb := MeshInstance3D.new()
+		crumb.name = "FoodScrap%d" % index
+		crumb.position = Vector3(residue_positions[index].x, 0.004, residue_positions[index].y)
+		crumb.scale = Vector3(1.2, 0.35, 0.8)
+		crumb.mesh = crumb_mesh
+		crumb.material_override = material
+		residue.add_child(crumb)
 
-	var bun_material := _create_food_material(Color("#d99948"))
-	var patty_material := _create_food_material(Color("#783c24"))
-	var cheese_material := _create_food_material(Color("#f1c84b"))
-	var lettuce_material := _create_food_material(Color("#69a447"))
-	_add_food_layer("BottomBun", 0.12, 0.05, 0.045, bun_material)
-	_add_food_layer("Patty", 0.115, 0.045, 0.09, patty_material)
-	_add_food_layer("Cheese", 0.14, 0.018, 0.122, cheese_material)
-	_add_food_layer("Lettuce", 0.135, 0.018, 0.14, lettuce_material)
+	var stain_material := StandardMaterial3D.new()
+	stain_material.albedo_color = Color("#79543a")
+	stain_material.roughness = 1.0
+	var stain_mesh := TorusMesh.new()
+	stain_mesh.inner_radius = 0.018
+	stain_mesh.outer_radius = 0.045
+	for index in range(2):
+		var stain := MeshInstance3D.new()
+		stain.name = "GreaseMark%d" % index
+		stain.position = Vector3(-0.075 + index * 0.13, 0.003, 0.055 - index * 0.1)
+		stain.scale = Vector3(1.2, 0.3, 0.7)
+		stain.mesh = stain_mesh
+		stain.material_override = stain_material
+		residue.add_child(stain)
 
+
+func _create_plated_food_visual() -> void:
+	_plated_food_visual = Node3D.new()
+	_plated_food_visual.name = "PlatedFood"
+	_plated_food_visual.position.y = 0.015
+	_plated_food_visual.scale = Vector3.ONE * 1.25
+	_held_plate_visual.add_child(_plated_food_visual)
+
+	var chicken_leg := PLATED_FOOD_MODEL.instantiate() as Node3D
+	chicken_leg.name = "ImportedChickenLeg"
+	chicken_leg.position = Vector3(0.0, 0.04, 0.0)
+	chicken_leg.rotation.y = deg_to_rad(-25.0)
+	chicken_leg.scale = Vector3.ONE * 0.35
+	_plated_food_visual.add_child(chicken_leg)
+
+	var burger := Node3D.new()
+	burger.name = "Burger"
+	_plated_food_visual.add_child(burger)
 	var bun_mesh := SphereMesh.new()
-	bun_mesh.radius = 0.13
-	bun_mesh.height = 0.12
-	bun_mesh.radial_segments = 24
-	bun_mesh.rings = 12
-	var top_bun := MeshInstance3D.new()
-	top_bun.name = "TopBun"
-	top_bun.mesh = bun_mesh
-	top_bun.material_override = bun_material
-	top_bun.position.y = 0.175
-	top_bun.scale = Vector3(1.0, 0.58, 1.0)
-	_held_food_visual.add_child(top_bun)
+	bun_mesh.radius = 0.075
+	bun_mesh.height = 0.06
+	_add_food_piece(burger, "BottomBun", bun_mesh, Color("#d99a45"), Vector3(0, 0.04, 0))
+	var patty_mesh := CylinderMesh.new()
+	patty_mesh.top_radius = 0.07
+	patty_mesh.bottom_radius = 0.07
+	patty_mesh.height = 0.025
+	_add_food_piece(burger, "Patty", patty_mesh, Color("#61351f"), Vector3(0, 0.075, 0))
+	var cheese_mesh := BoxMesh.new()
+	cheese_mesh.size = Vector3(0.13, 0.012, 0.13)
+	_add_food_piece(burger, "Cheese", cheese_mesh, Color("#f3c84b"), Vector3(0, 0.095, 0))
+	var top_bun_mesh := SphereMesh.new()
+	top_bun_mesh.radius = 0.07
+	top_bun_mesh.height = 0.055
+	_add_food_piece(burger, "TopBun", top_bun_mesh, Color("#e5aa54"), Vector3(0, 0.12, 0))
+
+	var rice := Node3D.new()
+	rice.name = "Rice"
+	_plated_food_visual.add_child(rice)
+	for index in range(5):
+		var rice_mesh := SphereMesh.new()
+		rice_mesh.radius = 0.047
+		rice_mesh.height = 0.052
+		var offset := Vector3(
+			-0.045 + float(index % 3) * 0.045,
+			0.04 + float(index / 3) * 0.018,
+			-0.025 + float(index % 2) * 0.05
+		)
+		_add_food_piece(rice, "RiceMound%d" % index, rice_mesh, Color("#f3edda"), offset)
+	for index in range(3):
+		var topping_mesh := SphereMesh.new()
+		topping_mesh.radius = 0.022
+		topping_mesh.height = 0.018
+		var topping_position := Vector3(-0.04 + index * 0.04, 0.073, 0.005)
+		_add_food_piece(
+			rice, "RiceTopping%d" % index, topping_mesh, Color("#bd6334"), topping_position
+		)
+
+	var vegetables := Node3D.new()
+	vegetables.name = "Vegetables"
+	_plated_food_visual.add_child(vegetables)
+	var vegetable_colors: Array[Color] = [
+		Color("#cf5938"), Color("#78a94e"), Color("#edbd4c"),
+		Color("#7c9a42"), Color("#dd6840"), Color("#94b957")
+	]
+	for index in range(vegetable_colors.size()):
+		var piece_mesh := BoxMesh.new()
+		piece_mesh.size = Vector3(0.052, 0.035, 0.045)
+		var angle := TAU * float(index) / float(vegetable_colors.size())
+		var piece_position := Vector3(cos(angle) * 0.067, 0.04, sin(angle) * 0.067)
+		var piece := _add_food_piece(
+			vegetables, "Vegetable%d" % index, piece_mesh, vegetable_colors[index], piece_position
+		)
+		piece.rotation.y = angle
+
+	var baked_dish := Node3D.new()
+	baked_dish.name = "BakedDish"
+	_plated_food_visual.add_child(baked_dish)
+	var bake_mesh := CylinderMesh.new()
+	bake_mesh.top_radius = 0.09
+	bake_mesh.bottom_radius = 0.085
+	bake_mesh.height = 0.035
+	_add_food_piece(baked_dish, "BakedBase", bake_mesh, Color("#b9673d"), Vector3(0, 0.04, 0))
+	for index in range(4):
+		var garnish_mesh := SphereMesh.new()
+		garnish_mesh.radius = 0.018
+		garnish_mesh.height = 0.012
+		var garnish_position := Vector3(
+			-0.04 + float(index % 2) * 0.08, 0.065, -0.035 + float(index / 2) * 0.07
+		)
+		_add_food_piece(
+			baked_dish, "Garnish%d" % index, garnish_mesh, Color("#84a849"), garnish_position
+		)
+
+	_set_plated_food_model()
 
 
-func _add_food_layer(
-	layer_name: String, radius: float, thickness: float, local_height: float, material: Material
-) -> void:
-	var layer_mesh := CylinderMesh.new()
-	layer_mesh.top_radius = radius
-	layer_mesh.bottom_radius = radius
-	layer_mesh.height = thickness
-	layer_mesh.radial_segments = 24
-	var layer := MeshInstance3D.new()
-	layer.name = layer_name
-	layer.mesh = layer_mesh
-	layer.material_override = material
-	layer.position.y = local_height
-	_held_food_visual.add_child(layer)
-
-
-func _create_food_material(color: Color) -> StandardMaterial3D:
+func _add_food_piece(
+	parent: Node3D,
+	piece_name: String,
+	mesh: Mesh,
+	color: Color,
+	piece_position: Vector3
+) -> MeshInstance3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
-	material.roughness = 0.58
-	return material
+	material.roughness = 0.82
+	var piece := MeshInstance3D.new()
+	piece.name = piece_name
+	piece.mesh = mesh
+	piece.material_override = material
+	piece.position = piece_position
+	parent.add_child(piece)
+	return piece
+
+
+func _food_type_for_points(points: int) -> StringName:
+	match points:
+		100:
+			return &"Burger"
+		75:
+			return &"Rice"
+		60:
+			return &"Vegetables"
+		_:
+			return &"BakedDish"
+
+
+func _set_plated_food_model() -> void:
+	if not _plated_food_visual:
+		return
+	for food in _plated_food_visual.get_children():
+		food.visible = food.name == "ImportedChickenLeg" or food.name == _plated_food_type
 
 
 func _sync_held_plate_visual() -> void:
 	var is_holding_plate := _plate_state != PLATE_NONE
 	if _held_plate_visual:
 		_held_plate_visual.visible = is_holding_plate
-	var arm_length_scale := 1.0
-	if is_holding_plate:
-		arm_length_scale = _held_plate_arm_length_scale
-	elif _holding_tomato:
-		arm_length_scale = HELD_PLATE_ARM_LENGTH_SCALE
-	_set_plate_arm_length(arm_length_scale)
+		var residue := _held_plate_visual.get_node_or_null("FoodResidue")
+		if residue:
+			residue.visible = _plate_state == PLATE_DIRTY and _plated_food_type.is_empty()
+		if _plated_food_visual:
+			_plated_food_visual.visible = _plate_state == PLATE_DIRTY
+			_set_plated_food_model()
+	_set_plate_arm_length(_held_plate_arm_length_scale if is_holding_plate else 1.0)
 	for hand_ik in _plate_hand_ik:
 		if is_holding_plate:
 			hand_ik.start()
@@ -1122,6 +1382,19 @@ func _set_plate_arm_length(scale_y: float) -> void:
 
 func _on_station_ui_action_pressed() -> void:
 	_station_minigame_action_requested = true
+
+
+func _on_mobile_interact_pressed() -> void:
+	if _active_kitchen_station:
+		_on_station_ui_action_pressed()
+		return
+	_mobile_interact_requested = true
+
+
+func _consume_mobile_interact() -> bool:
+	var interact_requested := _mobile_interact_requested
+	_mobile_interact_requested = false
+	return interact_requested
 
 
 func _consume_station_action() -> bool:
@@ -1309,7 +1582,7 @@ func _finish_grill_order(success: bool, burnt: bool) -> void:
 		_queue_food_for_plating(100)
 	else:
 		_food_ready_to_plate = false
-		_pending_food_points = 0
+		_ready_food_points.clear()
 		_gameplay_hud.set_order_result(
 			"Burger burned. Try again at the grill."
 			if burnt
@@ -1328,7 +1601,7 @@ func _finish_station_rounds(success: bool) -> void:
 		_queue_food_for_plating(50)
 	else:
 		_food_ready_to_plate = false
-		_pending_food_points = 0
+		_ready_food_points.clear()
 		_gameplay_hud.set_order_result(
 			"Order failed. Try again at the %s." % _active_kitchen_station.station_name
 		)
@@ -1344,9 +1617,11 @@ func _finish_station_rounds(success: bool) -> void:
 
 func _queue_food_for_plating(points: int) -> void:
 	_food_ready_to_plate = true
-	_pending_food_points = points
+	_ready_food_points.append(points)
+	if _put_ready_food_on_plate():
+		return
 	_gameplay_hud.set_order_result(
-		"Food ready. Take a clean plate, then use the plating counter.", "READY TO PLATE"
+		"Food ready. Pick up a clean plate to put the food on it.", "READY TO PLATE"
 	)
 
 
@@ -1362,6 +1637,7 @@ func _finish_station_minigame(_success: bool) -> void:
 	_active_kitchen_station = null
 	_cooking_minigame_ui.close_minigame()
 	_gameplay_hud.set_powers_visible(true)
+	_gameplay_hud.set_mobile_interact_visible(true)
 	if _spring_arm_offset:
 		_spring_arm_offset.exit_station_view()
 	_request_animation(&"Idle")
@@ -1378,6 +1654,8 @@ func _move() -> void:
 	var input_direction: Vector2 = Vector2.ZERO
 	if is_multiplayer_authority():
 		input_direction = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+		input_direction += _gameplay_hud.get_movement_input()
+		input_direction = input_direction.limit_length(1.0)
 
 	var direction: Vector3 = transform.basis * Vector3(input_direction.x, 0, input_direction.y).normalized()
 

@@ -9,6 +9,8 @@ const MAX_PLAYERS: int = 10
 const MAX_NICK_LENGTH := 24
 const MAX_ADDRESS_LENGTH := 253
 const DEFAULT_MAP_ID := "kitchen"
+const CONTROL_MODE_SIMPLE := "simple"
+const CONTROL_MODE_ADVANCED := "advanced"
 const MAP_SCENE_PATHS := {
 	"kitchen": "res://scenes/level/kitchen_map.tscn",
 	"island": "res://scenes/level/island_kitchen_map.tscn",
@@ -21,7 +23,13 @@ const MAP_DISPLAY_NAMES := {
 }
 
 var players = {}
-var player_info = {"nick": "host", "skin": Character.SkinColor.BLUE, "map_id": DEFAULT_MAP_ID}
+var player_info = {
+	"nick": "host",
+	"skin": Character.SkinColor.BLUE,
+	"map_id": DEFAULT_MAP_ID,
+	"control_mode": CONTROL_MODE_ADVANCED
+}
+var session_control_mode := CONTROL_MODE_ADVANCED
 var _session_active := false
 
 
@@ -33,7 +41,12 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected_ok)
 
 
-func start_host(nickname: String, skin_color_str: String, map_id: String = DEFAULT_MAP_ID):
+func start_host(
+	nickname: String,
+	skin_color_str: String,
+	map_id: String = DEFAULT_MAP_ID,
+	control_mode: String = CONTROL_MODE_ADVANCED
+):
 	var peer = ENetMultiplayerPeer.new()
 	var error = peer.create_server(SERVER_PORT, MAX_PLAYERS)
 	if error:
@@ -46,6 +59,8 @@ func start_host(nickname: String, skin_color_str: String, map_id: String = DEFAU
 	player_info["nick"] = sanitize_nickname(nickname, "Host_" + str(multiplayer.get_unique_id()))
 	player_info["skin"] = skin_str_to_e(skin_color_str)
 	player_info["map_id"] = sanitize_map_id(map_id)
+	session_control_mode = sanitize_control_mode(control_mode)
+	player_info["control_mode"] = session_control_mode
 
 	if DisplayServer.get_name() == "headless":
 		return
@@ -70,6 +85,7 @@ func join_game(nickname: String, skin_color_str: String, address: String = SERVE
 
 	player_info["nick"] = sanitize_nickname(nickname, "Player_" + str(multiplayer.get_unique_id()))
 	player_info["skin"] = skin_str_to_e(skin_color_str)
+	player_info["control_mode"] = CONTROL_MODE_ADVANCED
 
 
 func _on_connected_ok():
@@ -127,6 +143,7 @@ func _finish_session() -> void:
 	_session_active = false
 	multiplayer.multiplayer_peer = null
 	players.clear()
+	session_control_mode = CONTROL_MODE_ADVANCED
 	if had_session:
 		server_disconnected.emit()
 
@@ -160,8 +177,15 @@ func sanitize_player_info(info: Dictionary, fallback_nick: String) -> Dictionary
 	return {
 		"nick": sanitize_nickname(str(info.get("nick", "")), fallback_nick),
 		"skin": sanitize_skin_value(info.get("skin", Character.SkinColor.BLUE)),
-		"map_id": sanitize_map_id(str(info.get("map_id", DEFAULT_MAP_ID)))
+		"map_id": sanitize_map_id(str(info.get("map_id", DEFAULT_MAP_ID))),
+		"control_mode": sanitize_control_mode(str(info.get("control_mode", CONTROL_MODE_ADVANCED)))
 	}
+
+
+func sanitize_control_mode(control_mode: String) -> String:
+	if control_mode == CONTROL_MODE_SIMPLE:
+		return CONTROL_MODE_SIMPLE
+	return CONTROL_MODE_ADVANCED
 
 
 func get_map_ids() -> Array[String]:

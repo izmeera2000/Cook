@@ -3,7 +3,7 @@ extends Node3D
 
 signal perspective_changed(first_person: bool)
 
-const FIXED_CAMERA_PITCH := deg_to_rad(-55.0)
+const FIXED_CAMERA_PITCH := deg_to_rad(-35.0)
 const THIRD_PERSON_SIDE_OFFSET := 0.35
 const OCCLUDER_TRANSPARENCY := 0.5
 const MAX_OCCLUDERS := 8

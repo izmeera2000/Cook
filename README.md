@@ -7,6 +7,7 @@ Godot 4.7 starter project for building a 3D multiplayer game with player movemen
 ## Key Features
 
 - **Multiplayer Sessions:** Host, join, test multiple local instances, or run a headless dedicated server with support for up to 10 players.
+- **Cooking Controls:** The host chooses Advanced timed cooking or Simple automatic cooking for everyone in the session.
 - **Character Controller:** Camera-relative movement, sprinting, double jumping, synchronized animations, and switchable first- and third-person views.
 - **Player Profiles:** Four selectable character skins and in-world name tags for every player.
 - **Chat and Player List:** Communicate with connected players and view the current session members.
@@ -76,9 +77,11 @@ GODOT_BIN=/path/to/godot ./run_headless_server.sh
 - <kbd>I</kbd> to toggle inventory.
 - Hold <kbd>Tab</kbd> to show the online player list.
 - <kbd>V</kbd> to switch between first-person and third-person views.
+- On phones and tablets, use the on-screen joystick to move and the **INTERACT** button to use stations or pick up items.
+- When hosting, choose **Simple** to start autonomous cooking, move freely, and start other stations while bars above counters fill; interact with a finished counter to collect its food. **Advanced** keeps timed cooking and gesture controls. The host's choice applies to everyone.
 - Click **Orders** to view the current cooking order; **Hide** collapses the order bar.
 - Click **Powers** to view and activate cards, or press <kbd>1</kbd>–<kbd>4</kbd>; Quickstep boosts movement, Heat Rush speeds cooking, and Overclock boosts movement, jumping, and cooking.
-- At the wok, swipe the mouse side-to-side or shake your phone to toss and cook the rice; Heat Rush and Overclock reduce the shakes needed.
+- At the wok, shake your phone on mobile or swipe the mouse side-to-side on desktop to toss and cook the rice; Heat Rush and Overclock reduce the shakes needed.
 - At vegetable prep, press <kbd>E</kbd> or left-click to chop the vegetables; cooking-speed powers speed up preparation.
 - The order list currently includes a sample Classic Cheeseburger order with bun, patty, cheese, lettuce, and tomato.
 - <kbd>F1</kbd> to add a random test item (debug builds, host only).

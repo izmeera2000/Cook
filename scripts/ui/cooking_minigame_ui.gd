@@ -65,6 +65,8 @@ func begin_minigame(
 		if is_grill
 		else "Press E or click Cook when the marker reaches the green zone."
 	)
+	target_zone.show()
+	action_button.show()
 	burger_visual.visible = is_grill
 	meter_fill.visible = is_grill
 	needle.visible = not is_grill
@@ -89,21 +91,26 @@ func begin_minigame(
 	panel.show()
 
 
-func begin_grill_view() -> void:
+func begin_grill_view(simple_mode := false) -> void:
 	panel.hide()
 	interaction_prompt.hide()
 	grill_hud.show()
-	grill_action_button.show()
+	grill_action_button.visible = not simple_mode
 	grill_title.text = "GRILL STATION"
 	grill_side_one_row.show()
 	grill_side_two_row.show()
 	rice_progress.hide()
 	prep_progress.hide()
-	grill_status.text = "Patty on the grill — wait for a good sear, then flip."
+	grill_status.text = (
+		"Cooking both sides automatically."
+		if simple_mode
+		else "Patty on the grill — wait for a good sear, then flip."
+	)
 	grill_side_one.value = 0.0
 	grill_side_two.value = 0.0
-	grill_action_button.text = "FLIP / PLATE  (E)"
+	grill_action_button.text = "FLIP / PLATE  (E)" if not simple_mode else "INTERACT TO RETURN"
 	grill_leave_button.text = "LEAVE STATION"
+	grill_leave_button.visible = not simple_mode
 
 
 func set_grill_view(
@@ -116,64 +123,84 @@ func set_grill_view(
 	grill_side_two.modulate = Color("#dca647") if active_side == 1 else Color.WHITE
 
 
-func begin_wok_view() -> void:
+func begin_wok_view(simple_mode := false) -> void:
 	panel.hide()
 	interaction_prompt.hide()
 	grill_hud.show()
 	grill_title.text = "WOK STATION"
-	grill_status.text = "Swipe the mouse to toss rice, or shake your phone."
+	grill_status.text = "Rice cooking automatically." if simple_mode else (
+		"Shake your phone to toss the rice."
+		if OS.has_feature("mobile")
+		else "Swipe the mouse side-to-side to toss the rice."
+	)
 	grill_side_one_row.hide()
 	grill_side_two_row.hide()
 	rice_progress.show()
 	prep_progress.hide()
 	rice_progress_bar.value = 0.0
 	grill_action_button.hide()
+	grill_action_button.disabled = false
+	grill_action_button.text = "INTERACT TO RETURN"
+	grill_leave_button.visible = not simple_mode
 	grill_leave_button.text = "LEAVE STATION"
 
 
-func set_wok_view(progress: float, shakes: int) -> void:
-	grill_status.text = "Swipe mouse side-to-side or shake your phone.\nShake %d  |  %d%% cooked" % [
-		shakes, roundi(progress * 100.0)
-	]
+func set_wok_view(progress: float, shakes: int, simple_mode := false) -> void:
+	var status := (
+		"Cooking automatically"
+		if simple_mode
+		else ("Phone shakes: %d" % shakes if OS.has_feature("mobile") else "Mouse swipes: %d" % shakes)
+	)
+	grill_status.text = "%s  |  %d%% cooked" % [status, roundi(progress * 100.0)]
 	rice_progress_bar.value = progress * 100.0
 
 
-func finish_wok_view(shakes: int) -> void:
-	grill_status.text = "RICE READY!\nWok shakes: %d" % shakes
+func finish_wok_view(shakes: int, simple_mode := false) -> void:
+	grill_status.text = (
+		"RICE READY!\nCooked automatically."
+		if simple_mode
+		else "RICE READY!\nWok shakes: %d" % shakes
+	)
 	rice_progress_bar.value = 100.0
-	grill_action_button.hide()
+	grill_action_button.disabled = false
+	grill_action_button.visible = simple_mode
+	grill_leave_button.visible = not simple_mode
 	grill_leave_button.text = "RETURN TO KITCHEN"
-	grill_leave_button.show()
 
 
-func begin_prep_view() -> void:
+func begin_prep_view(simple_mode := false) -> void:
 	panel.hide()
 	interaction_prompt.hide()
 	grill_hud.show()
 	grill_title.text = "VEGETABLE PREP"
-	grill_status.text = "Chop the vegetables into pieces."
+	grill_status.text = "Chopping vegetables automatically." if simple_mode else "Chop the vegetables into pieces."
 	grill_side_one_row.hide()
 	grill_side_two_row.hide()
 	rice_progress.hide()
 	prep_progress.show()
 	prep_progress_bar.value = 0.0
-	grill_action_button.show()
-	grill_action_button.text = "CHOP  (E)"
+	grill_action_button.visible = not simple_mode
+	grill_action_button.disabled = false
+	grill_action_button.text = "CHOP  (E)" if not simple_mode else "INTERACT TO RETURN"
+	grill_leave_button.visible = not simple_mode
 	grill_leave_button.text = "LEAVE STATION"
 
 
-func set_prep_view(progress: float, chops: int) -> void:
-	grill_status.text = "Chopping vegetables — chop %d  |  %d%% prepared" % [
-		chops, roundi(progress * 100.0)
-	]
+func set_prep_view(progress: float, chops: int, simple_mode := false) -> void:
+	grill_status.text = (
+		"Chopping automatically  |  %d%% prepared" % roundi(progress * 100.0)
+		if simple_mode
+		else "Chopping vegetables — chop %d  |  %d%% prepared"
+		% [chops, roundi(progress * 100.0)]
+	)
 	prep_progress_bar.value = progress * 100.0
 
 
-func finish_prep_view(chops: int) -> void:
+func finish_prep_view(chops: int, simple_mode := false) -> void:
 	grill_status.text = "VEGETABLES READY!\nChops: %d" % chops
 	prep_progress_bar.value = 100.0
 	grill_action_button.show()
-	grill_action_button.text = "RETURN TO KITCHEN"
+	grill_action_button.text = "INTERACT TO RETURN" if simple_mode else "RETURN TO KITCHEN"
 	grill_leave_button.hide()
 
 
@@ -189,6 +216,7 @@ func finish_grill_view(title: String, status: String, side_doneness: Array[float
 func close_grill_view() -> void:
 	grill_hud.hide()
 	grill_leave_button.show()
+	grill_action_button.disabled = false
 	grill_action_button.show()
 
 
@@ -218,6 +246,7 @@ func set_finished(title: String, instructions: String, result: String) -> void:
 	instructions_label.text = instructions
 	result_label.text = result
 	action_button.text = "RETURN TO KITCHEN"
+	action_button.show()
 
 
 func close_minigame() -> void:

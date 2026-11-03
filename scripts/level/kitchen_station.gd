@@ -12,6 +12,7 @@ const GRILL_IDEAL_DONENESS_MAX := 0.92
 const GRILL_BURN_DONENESS := 1.12
 const WOK_PROGRESS_PER_SHAKE := 0.2
 const PREP_PROGRESS_PER_CHOP := 1.0 / 3.0
+const PREP_CHOPS_PER_SECOND := 1.5
 
 @export var station_name := "Kitchen Station"
 @export var station_type: StringName = &"oven"
@@ -74,6 +75,19 @@ func advance_grill(delta: float, cooking_speed_multiplier := 1.0) -> bool:
 		_grill_finished = true
 		return true
 	return false
+
+
+func advance_grill_simple(delta: float, cooking_speed_multiplier := 1.0) -> bool:
+	if not _grill_active or _grill_finished:
+		return false
+	var current_doneness := _grill_side_doneness[_grill_side]
+	var time_to_flip := (
+		GRILL_IDEAL_DONENESS_MIN - current_doneness
+	) / (GRILL_COOK_RATE * cooking_speed_multiplier)
+	advance_grill(minf(delta, maxf(0.0, time_to_flip)), cooking_speed_multiplier)
+	if _grill_active and _grill_side_doneness[_grill_side] >= GRILL_IDEAL_DONENESS_MIN:
+		interact_with_grill()
+	return _grill_finished
 
 
 func interact_with_grill() -> GrillAction:
@@ -159,6 +173,23 @@ func shake_wok(cooking_speed_multiplier := 1.0) -> bool:
 	return false
 
 
+func advance_wok_simple(delta: float, cooking_speed_multiplier := 1.0) -> bool:
+	if not _wok_active or _wok_finished:
+		return _wok_finished
+	var previous_shakes := _wok_shakes
+	_wok_progress = minf(
+		1.0, _wok_progress + delta * WOK_PROGRESS_PER_SHAKE * cooking_speed_multiplier
+	)
+	_wok_shakes = floori(_wok_progress / WOK_PROGRESS_PER_SHAKE)
+	_wok_rice.set_cook_progress(_wok_progress)
+	if _wok_shakes > previous_shakes:
+		_wok_rice.shake()
+	if _wok_progress >= 1.0:
+		_wok_active = false
+		_wok_finished = true
+	return _wok_finished
+
+
 func is_wok_finished() -> bool:
 	return _wok_finished
 
@@ -202,6 +233,24 @@ func chop_vegetables(cooking_speed_multiplier := 1.0) -> bool:
 		_prep_finished = true
 		return true
 	return false
+
+
+func advance_prep_simple(delta: float, cooking_speed_multiplier := 1.0) -> bool:
+	if not _prep_active or _prep_finished:
+		return _prep_finished
+	var previous_chops := _prep_chops
+	_prep_progress = minf(
+		1.0,
+		_prep_progress + delta * PREP_CHOPS_PER_SECOND * PREP_PROGRESS_PER_CHOP * cooking_speed_multiplier
+	)
+	_prep_chops = mini(3, floori(_prep_progress / PREP_PROGRESS_PER_CHOP + 0.001))
+	_vegetable_prep.set_cut_progress(_prep_progress)
+	if _prep_chops > previous_chops:
+		_vegetable_prep.chop()
+	if _prep_progress >= 1.0:
+		_prep_active = false
+		_prep_finished = true
+	return _prep_finished
 
 
 func is_prep_finished() -> bool:
